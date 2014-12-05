@@ -1,0 +1,8 @@
+ros_stacks/active_estimation_cat/src/active_estimation_rosjava/.gradle
+ros_stacks/active_estimation_cat/src/active_estimation_rosjava/active_estimation_msgs/build
+ros_stacks/telekyb_common/src/telekyb_common_rosjava/.gradle
+ros_stacks/telekyb_common/src/telekyb_common_rosjava/telekyb_msgs/build
+slprj/
+*.mex*
+*.so
+*.o
