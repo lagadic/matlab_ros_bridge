@@ -45,6 +45,10 @@ mdl_paths = {...
 @MDL_PATHS@ ...
 };
 
+src_paths = {... 
+@SRC_PATHS@ ...
+};
+
 source_path = fileparts('@SRC_PATH@');
 sfun_path = fileparts('@SFUN_PATH@');
 
@@ -60,9 +64,9 @@ load_system(fullfile(source_path, 'matlab_ros_bridge', 'models', 'subsystem'));
 
 for j = 1:numel(packages)
     disp(['Generating library for package ' packages{j}]);
-    addpath(fullfile( source_path, packages{j}, fileparts(mdl_paths{j})));
-    fprintf(fid, 'addpath(fullfile(''%s'', ''%s'', ''%s''));\n', source_path, packages{j}, fileparts(mdl_paths{j}));
-    fprintf(fid, 'addpath(fullfile(''%s'', ''%s'', ''src'', ''%s''));\n', source_path, packages{j}, packages{j});
+    addpath(fullfile(fileparts(mdl_paths{j})));
+    fprintf(fid, 'addpath(fullfile(''%s''));\n', fileparts(mdl_paths{j}));
+    fprintf(fid, 'addpath(fullfile(''%s''));\n', src_paths{j});
     fprintf(fid, 'addpath(fullfile(''%s'', ''%s'', ''lib''));\n', sfun_path, packages{j});
     
     [~, mdl] = fileparts(mdl_paths{j});
