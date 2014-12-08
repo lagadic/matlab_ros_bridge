@@ -135,9 +135,8 @@ Matlab version  | gcc supported version | shipped boost vesion | compiled boost 
 
 ##Ros/Matlab combinatios that have already been tested:
 
-
-  x  | __2012a__ | __2012b__ | __2013a__ | __2013b__ | __2014a__ | __2014b__
--- | -- | -- | -- | -- | -- | --
-__Groovy__ | ? | ? | ? | ? | ? | ? 
-__Hydro__ | ? | ? | ? | Y | Y | ? 
-__Indigo__ | ? | ? | ? | ? | Y | ?
+Ros\Matlab  | __2012a__ | __2012b__ | __2013a__ | __2013b__ | __2014a__ | __2014b__ |
+----------- | --------- | --------- | --------- | --------- | --------- | --------- |
+__Groovy__ | never tested | never tested | never tested | never tested | never tested | never tested |
+__Hydro__ | never tested | never tested | never tested | working | working | never tested |
+__Indigo__ | never tested | never tested | never tested | never tested | working | never tested |
