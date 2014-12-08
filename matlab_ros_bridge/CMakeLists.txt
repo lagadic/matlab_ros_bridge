@@ -220,9 +220,13 @@ else()
       #string(REGEX REPLACE " " ";" MSG_TYPE ${MSG_TYPE})
       separate_arguments(MSG_TYPE)
       list(GET MSG_TYPE 0 PKG_TYPE)
-      list(GET MSG_TYPE 1 MSG_TYPE)
+      list(GET MSG_TYPE 1 MDL_PATH)
+      execute_process(
+  	COMMAND rospack find ${PKG_TYPE}
+  	OUTPUT_VARIABLE ${PKG_TYPE}_PATH OUTPUT_STRIP_TRAILING_WHITESPACE)
       set(INSTALLED_MRB_PACKAGES "${INSTALLED_MRB_PACKAGES} '${PKG_TYPE}'")
-      set(MDL_PATHS "${MDL_PATHS} '${MSG_TYPE}'")
+      set(MDL_PATHS "${MDL_PATHS} '${${PKG_TYPE}_PATH}/${MDL_PATH}'")
+      set(SRC_PATHS "${SRC_PATHS} '${${PKG_TYPE}_PATH}/src/${PKG_TYPE}'")
     endforeach(MSG_TYPE)
     
     set(SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR})
