@@ -68,7 +68,7 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
 6. In a terminal navigate to the src directory of the catkin workspace created in the previous step and do
 
         #!bash
-        $ wstool set matlab_ros_bridge --git https://github.com/ricsp/matlab_ros_bridge.git
+        $ wstool set matlab_ros_bridge --git https://github.com/lagadic/matlab_ros_bridge.git
         $ wstool update matlab_ros_bridge
 
 7. Before compiling you might also need to modify the file src/roscpp/src/libros/param.cpp as described [here](https://github.com/ros/ros_comm/commit/0a589a52f5296bb3002a2f97912989715f064630).
