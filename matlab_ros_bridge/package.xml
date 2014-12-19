@@ -13,6 +13,8 @@
   <author email="riccardo.spica@inria.fr">Riccardo Spica</author> 
   <author email="me@riedel-privat.de">Martin Riedel</author>
   
+  <url>http://wiki.ros.org/matlab_ros_bridge</url>
+  
   
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
