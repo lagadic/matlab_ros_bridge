@@ -8,8 +8,6 @@
   <maintainer email="giovanni.claudio@inria.fr">Giovanni Claudio</maintainer>
   <license>BSD</license>
 
-  <url type="website">http://wiki.ros.org/matlab_ros_bridge</url>
-
   <author email="riccardo.spica@inria.fr">Riccardo Spica</author> 
   <author email="me@riedel-privat.de">Martin Riedel</author>
   
