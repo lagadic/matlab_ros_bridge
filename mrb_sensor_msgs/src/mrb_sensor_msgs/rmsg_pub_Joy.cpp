@@ -252,7 +252,7 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     msg.header.stamp = ros::Time::now();
     
     msg.axes.resize(CONSTANT_AXES_SIZE);
-    msg.axes.resize(CONSTANT_BUTTONS_SIZE);
+    msg.buttons.resize(CONSTANT_BUTTONS_SIZE);
     
     // axes
     for (unsigned int i=0; i < CONSTANT_AXES_SIZE; i++) 
