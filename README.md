@@ -12,7 +12,7 @@ The software is released under the BSD license. See the LICENSE file in this rep
 
 ##Compiling the bridge
 
-The process of compiling the matlab_ros_bridge is not streightforward. The main problem is that MATLAB doesn't use the system distribution of boost but instead comes with its ows shipped version, which can be found in, e.g. 'matlabroot/bin/glnxa64/'.
+The process of compiling the matlab_ros_bridge is not straightforward. The main problem is that MATLAB doesn't use the system distribution of boost but instead comes with its ows shipped version, which can be found in, e.g. 'matlabroot/bin/glnxa64/'.
 Since the mex files that we generate will run inside matlab it is important that they are linked against the same version of boost that is used in MATLAB. Moreover, since the mex files will also be linked to ROS libraries, we also need to recompile ROS and link it to the same version of boost.
 Finally we also need to compile everyting (boost, ros and our mex files) using a c/c++ compiler officially supported by the MATLAB distribution that we are using.
 
