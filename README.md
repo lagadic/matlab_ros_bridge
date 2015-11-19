@@ -24,7 +24,7 @@ If you cannot find a precompiled boost download link for you setup then keep rea
 1. Download the correct version of boost from [here](http://www.boost.org/users/history/) in the folder <boost_dir>. To know which version you need you can type, in a matlab command window, the following command: 
 
         #!matlab
-        ls([matlabroot '/bin/glnxa64/libboost_date_time.'])
+        ls([matlabroot '/bin/glnxa64/libboost_date_time*'])
 
     
 2. Open a new terminal and navigate to <boost_dir> and give the following command: 
