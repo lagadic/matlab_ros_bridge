@@ -21,21 +21,19 @@ Finally we also need to compile everyting (boost, ros and our mex files) using a
 This section will guide you through the process of compiling the required version of boost with the compiler supported by your Matlab version. Before doing this you should try using one of the precompiled boost distributions available in the download section of this repository. Check the version correspondance table below in this page to find the correct download link.
 If you cannot find a precompiled boost download link for you setup then keep reading, otherwise skip to the following section.
 
-1. Download the correct version of boost from [here](http://www.boost.org/users/history/) in the folder <boost_dir>. You can type
+1. Download the correct version of boost from [here](http://www.boost.org/users/history/) in the folder <boost_dir>. To know which version you need you can type in a matlab command window the following command: 
 
         #!matlab
         ls([matlabroot '/bin/glnxa64/libboost_date_time.'])
 
-    in a matlab command window to know which version you need.
-
-
-2. In a terminal navigate to <boost_dir> and do 
+    
+2. Open a new terminal and navigate to <boost_dir> and give the following command: 
 
         #!bash
         $ ./bootstrap.sh --prefix=path/to/boost/installation/prefix
 
 
-3. edit the file <boost_dir>/project-config.jam with your favourite tool and substitute 
+3. Edit the file <boost_dir>/project-config.jam with your favourite tool and substitute: 
 
     >using gcc;
     
@@ -45,7 +43,7 @@ If you cannot find a precompiled boost download link for you setup then keep rea
     
     The exact version of gcc/g++ that you need to use depends on the matlab release (check it on [Matlab](http://www.mathworks.it/support/sysreq/previous_releases.html) website).
 
-4. build boost with 
+4. Build boost by doing:
 
         #!bash
         $ ./bjam link=shared -j8 install
@@ -63,9 +61,9 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
 
 ###Compiling ROS
 
-5. Follow the instructions for your ROS distribution on `http://wiki.ros.org/<distro>/Installation/Source` (e.g. for [Indigo](http://wiki.ros.org/indigo/Installation/Source)), to install ROS-Comm in the "wet" version until you need to compile. DON'T COMPILE NOW.
+5. Follow the instructions for your ROS distribution on `http://wiki.ros.org/<distro>/Installation/Source` (e.g. for [Indigo](http://wiki.ros.org/indigo/Installation/Source)), to install ROS-Comm in the "wet" version until you need to compile. DON'T COMPILE NOW (it means that you don't have to do a catkin_make or catkin_make_isolated).
 
-6. In a terminal navigate to the src directory of the catkin workspace created in the previous step and do
+6. In a terminal navigate to the src directory of the catkin workspace created in the previous step and do:
 
         #!bash
         $ wstool set matlab_ros_bridge --git https://github.com/lagadic/matlab_ros_bridge.git
@@ -73,7 +71,7 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
 
 7. Before compiling you might also need to modify the file src/roscpp/src/libros/param.cpp as described [here](https://github.com/ros/ros_comm/commit/0a589a52f5296bb3002a2f97912989715f064630).
 
-8. Compile ros and the bridge with (e.g.)
+8. Compile ros and the bridge with:
 
         #!bash
         $ catkin_make_isolated --cmake-args -DBOOST_ROOT=path/to/boost/installation/prefix -DBoost_NO_SYSTEM_PATHS=ON -DCMAKE_C_COMPILER=/usr/bin/gcc-4.4 -DCMAKE_CXX_COMPILER=/usr/bin/g++-4.4 -DMATLAB_DIR=/usr/local/MATLAB/R2012b
@@ -82,7 +80,7 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
     Add `install` at the end or run `catkin_make install` if desired.
 
 9. Navigate in a terminal to the build directory of the package `matlab_ros_bridge`. It should be in `catkin_ws/build_isolated/matlab_ros_bridge`.
-    Make sure you have "sourced" your workspace by running.
+    Make sure you have "sourced" your workspace by running:
 
         #!bash
         $ source /path/to/your/catkin_ws/devel_isolated/setup.bash
@@ -97,7 +95,7 @@ Note: the incompatibility issue discussed in the previous section might cause `r
 
 ###Running MATLAB
 
-10. In your [MATLAB Startup File](http://www.mathworks.it/it/help/matlab/matlab_env/startup-options.html) add the following lines
+10. In your [MATLAB Startup File](http://www.mathworks.it/it/help/matlab/matlab_env/startup-options.html) add the following lines:
 
         #!matlab
         addpath(fullfile('path','to','your','catkin_ws','devel_isolated','matlab_ros_bridge','share','matlab_ros_bridge'));
