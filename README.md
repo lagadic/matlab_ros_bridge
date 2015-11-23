@@ -10,6 +10,20 @@ This fork is currently supported by [Riccardo Spica](mailto:riccardo.spica@irisa
 
 The software is released under the BSD license. See the LICENSE file in this repository for more information.
 
+##Configuring Matlab
+
+Before proceeding with the next steps you need to configure Matlab mex compiler.
+If you have not done it yet, run matlab and type this command in the command window:
+        
+```matlab
+mex -setup
+```
+When you get the following message:
+
+    Enter the number of the compiler (0-1):
+    
+Enter 1 to select the first option. This should create a mex option file in ~/.matlab/R2014a/mexopts.sh.
+
 ##Compiling the bridge
 
 The process of compiling the matlab_ros_bridge is not straightforward. The main problem is that MATLAB doesn't use the system distribution of boost but instead comes with its ows shipped version, which can be found in, e.g. 'matlabroot/bin/glnxa64/'.
@@ -21,18 +35,16 @@ Finally we also need to compile everyting (boost, ros and our mex files) using a
 This section will guide you through the process of compiling the required version of boost with the compiler supported by your Matlab version. Before doing this you should try using one of the precompiled boost distributions available in the download section of this repository. Check the version correspondance table below in this page to find the correct download link.
 If you cannot find a precompiled boost download link for you setup then keep reading, otherwise skip to the following section.
 
-1. Download the correct version of boost from [here](http://www.boost.org/users/history/) in the folder <boost_dir>. To know which version you need you can type, in a matlab command window, the following command: 
+1. Download the correct version of boost from [here](http://www.boost.org/users/history/) in a folder of your choice (later referred to as <boost_dir>). To know which version you need you can type, in a matlab command window, the following command: 
 
-        #!matlab
-        ls([matlabroot '/bin/glnxa64/libboost_date_time*'])
-
-    
+    ```matlab
+    ls([matlabroot '/bin/glnxa64/libboost_date_time*'])
+    ```
 2. Open a new terminal and navigate to <boost_dir> and give the following command: 
 
-        #!bash
-        $ ./bootstrap.sh --prefix=path/to/boost/installation/prefix
-
-
+    ```bash
+    $ ./bootstrap.sh --prefix=path/to/boost/installation/prefix
+    ```
 3. Edit the file <boost_dir>/project-config.jam with your favourite tool and substitute: 
 
     >using gcc;
@@ -45,18 +57,19 @@ If you cannot find a precompiled boost download link for you setup then keep rea
 
 4. Build boost by doing:
 
-        #!bash
-        $ ./bjam link=shared -j8 install
+    ```bash
+    $ ./bjam link=shared -j8 install
+    ```
+Note: while building Boost you might encounter [this pseudo-bug](https://svn.boost.org/trac/boost/ticket/6940) due to an incompatibility between older versions of Boost and the new C11 standard. To solve this you can either substitute all occurrences of `TIME_UTC` in all Boost headers with `TIME_UTC_` (as done in more recent versions of Boost). For istance, in version 1.49.0, you need to modify <boost_dir>/boost/thread/xtime.hpp and <boost_dir>/libs/thread/src/pthread/timeconv.inl.
 
-Note: while building Boost you might encounter [this pseudo-bug](https://svn.boost.org/trac/boost/ticket/6940) due to an incompatibility between older versions of Boost and the new C11 standard. To solve this you can either substitute all occurrences of `TIME_UTC` in all Boost headers with `TIME_UTC_` (as done in more recent versions of Boost) or change
+In some cases you might be able to solve this issue by modifying <boost_dir>/project-config.jam so as to change
 
 >using gcc : 4.4 : g++-4.4 ;
 
-in 
+to
 
 >using gcc : 4.4 : g++-4.4 : <cxxflags>-U_GNU_SOURCE ;
 
-in <boost_dir>/project-config.jam or .
 If you are building boost on a x64 system you might also encounter [this bug](https://svn.boost.org/trac/boost/ticket/6851). In this case just apply the proposed fix.
 
 ###Compiling ROS
@@ -65,55 +78,57 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
 
 6. In a terminal navigate to the src directory of the catkin workspace created in the previous step and do:
 
-        #!bash
-        $ wstool set matlab_ros_bridge --git https://github.com/lagadic/matlab_ros_bridge.git
-        $ wstool update matlab_ros_bridge
-
+    ```bash
+    $ wstool set matlab_ros_bridge --git https://github.com/lagadic/matlab_ros_bridge.git
+    $ wstool update matlab_ros_bridge
+    ```
 7. Before compiling you might also need to modify the file src/roscpp/src/libros/param.cpp as described [here](https://github.com/ros/ros_comm/commit/0a589a52f5296bb3002a2f97912989715f064630).
 
 8. Compile ros and the bridge with:
 
-        #!bash
-        $ catkin_make_isolated --cmake-args -DBOOST_ROOT=path/to/boost/installation/prefix -DBoost_NO_SYSTEM_PATHS=ON -DCMAKE_C_COMPILER=/usr/bin/gcc-4.4 -DCMAKE_CXX_COMPILER=/usr/bin/g++-4.4 -DMATLAB_DIR=/usr/local/MATLAB/R2012b
-    
+    ```bash
+    $ catkin_make_isolated --cmake-args -DBOOST_ROOT=path/to/boost/installation/prefix -DBoost_NO_SYSTEM_PATHS=ON -DCMAKE_C_COMPILER=/usr/bin/gcc-4.4 -DCMAKE_CXX_COMPILER=/usr/bin/g++-4.4 -DMATLAB_DIR=/usr/local/MATLAB/R2012b
+    ```
     note that you might need to change this command according to your <boost_dir>, Matlab path and compiler version.
     Add `install` at the end or run `catkin_make install` if desired.
 
 9. Navigate in a terminal to the build directory of the package `matlab_ros_bridge`. It should be in `catkin_ws/build_isolated/matlab_ros_bridge`.
     Make sure you have "sourced" your workspace by running:
 
-        #!bash
-        $ source /path/to/your/catkin_ws/devel_isolated/setup.bash
-        $ cmake .
-
+    ```bash
+    $ source /path/to/your/catkin_ws/devel_isolated/setup.bash
+    $ cmake .
+    ````
     Now generate the simulink block library by running:
 
-        #!bash
-        $ make generate_library
-
+    ```bash
+    $ make generate_library
+    ```
 Note: the incompatibility issue discussed in the previous section might cause `rosbag` (and possibly other packages) to fail building. If this is the case, either substitute all occurrences of `TIME_UTC` in all rosbag source files with `TIME_UTC_` or add `-DCMAKE_CXX_FLAGS=-U_GNU_SOURCE` to your `catkin_make_isolated` command in step 4.
 
 ###Running MATLAB
 
 10. In your [MATLAB Startup File](http://www.mathworks.it/it/help/matlab/matlab_env/startup-options.html) add the following lines:
 
-        #!matlab
-        addpath(fullfile('path','to','your','catkin_ws','devel_isolated','matlab_ros_bridge','share','matlab_ros_bridge'));
-        run(fullfile('path','to','your','catkin_ws','devel_isolated','matlab_ros_bridge','share','matlab_ros_bridge','setup.m'));
-
+    ```matlab
+    addpath(fullfile('path','to','your','catkin_ws','devel_isolated','matlab_ros_bridge','share','matlab_ros_bridge'));
+    run(fullfile('path','to','your','catkin_ws','devel_isolated','matlab_ros_bridge','share','matlab_ros_bridge','setup.m'));
+    ```
 11. To run matlab open a terminal and type the following:
 
-        #!matlab
-        $ source /path/to/your/catkin_ws/devel_isolated/setup.bash
-        $ matlab
+    ```matlab
+    $ source /path/to/your/catkin_ws/devel_isolated/setup.bash
+    $ matlab
+    ```
 
 ###Testing that everything works
 
 12. In your matlab command window navigate to the folder `/path/to/your/catkin_ws/src/matlab_ros_bridge/matlab_ros_bridge/models` and type
 
-        #!matlab
-        Tsim = 2e-5;
-
+    ```matlab
+    Tsim = 2e-5;
+    ```
+    
     Now open the model `test.slx` and try to run it in all different running mode.
 
 ##Note
