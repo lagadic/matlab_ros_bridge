@@ -235,7 +235,7 @@ else()
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/generate_model.m.cmake ${CMAKE_BINARY_DIR}/generate_model.m)
     
     add_custom_target(generate_library 
-        COMMAND matlab -nodesktop -nosplash -r \"cd\('${CMAKE_BINARY_DIR}'\)\; run generate_model.m\; exit\"
+        COMMAND ${MATLAB_EXE} -nodesktop -nosplash -r \"cd\('${CMAKE_BINARY_DIR}'\)\; run generate_model.m\; exit\"
         COMMAND mv ros_msgs.slx setup.m ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}
         COMMAND cp ${PROJECT_SOURCE_DIR}/models/slblocks.m ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})

@@ -56,10 +56,12 @@ if strcmp(sfun_path(end-numel('matlab_ros_bridge')+1:end), 'matlab_ros_bridge')
     sfun_path = sfun_path(1:end-numel('matlab_ros_bridge'));
 end
 
+disp('Creating main library file. This may take a while.');
 new_system(lib_name,'Library');
 
 fid = fopen( 'setup.m', 'wt' );
 
+disp('Loading model...');
 load_system(fullfile(source_path, 'matlab_ros_bridge', 'models', 'subsystem'));
 
 for j = 1:numel(packages)
