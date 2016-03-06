@@ -1,3 +1,4 @@
 [submodule "cmake_module_matlab"]
 	path = cmake_module_matlab
 	url = https://github.com/lagadic/cmake_module_matlab.git
+	branch = master
