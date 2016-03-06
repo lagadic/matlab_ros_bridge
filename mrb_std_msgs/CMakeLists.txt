@@ -37,17 +37,18 @@
 
 
 cmake_minimum_required(VERSION 2.8.3)
-project(matlab_ros_bridge)
+project(mrb_std_msgs)
 
 
-#set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
 #set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  matlab_ros_bridge
   roscpp
+  std_msgs
   cmake_module_matlab
 )
 
@@ -58,6 +59,10 @@ if(MATLAB_FOUND)
 endif()
 
 add_definitions(-DMATLAB_MEX_FILE)
+
+## System dependencies are found with CMake's conventions
+# find_package(Boost REQUIRED COMPONENTS system)
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -112,7 +117,7 @@ add_definitions(-DMATLAB_MEX_FILE)
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   active_estimation_msgs#   geometry_msgs#   sensor_msgs#   std_msgs#   telekyb_msgs
+#   active_estimation_msgs#   geometry_msgs#   std_msgs#   std_msgs#   telekyb_msgs
 # )
 
 ###################################
@@ -125,10 +130,10 @@ add_definitions(-DMATLAB_MEX_FILE)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-	INCLUDE_DIRS include
+#  INCLUDE_DIRS include
 #  LIBRARIES matlab_ros_bridge
-   CATKIN_DEPENDS roscpp
-   DEPENDS Matlab
+   CATKIN_DEPENDS roscpp std_msgs matlab_ros_bridge
+   DEPENDS boost Matlab
 )
 
 ###########
@@ -139,7 +144,11 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-  include ${catkin_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
+)
+
+set(SOURCES
+  rmsg_pub_String.cpp
 )
 
 string(FIND ${CATKIN_DEVEL_PREFIX} ${PROJECT_NAME} FoundPosition REVERSE)
@@ -149,21 +158,19 @@ else()
 	set(${PROJECT_NAME}_MEX_DESTINATION ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_LIB_DESTINATION})
 endif()
 
-
-## Declare a cpp library
-add_library(rtblock
-  src/${PROJECT_NAME}/rtblock.cpp
-)
-
-set_target_properties(rtblock PROPERTIES PREFIX "" SUFFIX ".mexa64")
-set_target_properties(rtblock PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${${PROJECT_NAME}_MEX_DESTINATION})
-
-target_link_libraries(rtblock ${catkin_LIBRARIES})
-install(TARGETS rtblock
-	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+foreach(SOURCE ${SOURCES})
+    	string(REGEX REPLACE ".cpp" "" TARGET_NAME "${SOURCE}")
+    	message(STATUS "Adding target ${TARGET_NAME} for ${SOURCE}")
+    	add_library(${TARGET_NAME} SHARED src/${PROJECT_NAME}/${SOURCE})
+    	set_target_properties(${TARGET_NAME} PROPERTIES PREFIX "" SUFFIX ".mexa64")
+	set_target_properties(${TARGET_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${${PROJECT_NAME}_MEX_DESTINATION})
+    	target_link_libraries(${TARGET_NAME} ${catkin_LIBRARIES})
+    	install(TARGETS ${TARGET_NAME}
+			ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+			LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+			RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+		)
+endforeach(SOURCE)
 
 ## Declare a cpp executable
 # add_executable(matlab_ros_bridge_node src/matlab_ros_bridge_node.cpp)
@@ -199,49 +206,6 @@ string(REGEX REPLACE ";" "' '" MAKE_INFO_LINK_LIBS_OBJS "'${MAKE_INFO_LINK_LIBS_
 
 configure_file(${RTWMAKECFG_TEMPLATE_PATH} ${${PROJECT_NAME}_MEX_DESTINATION}/rtwmakecfg.m)
 
-execute_process(
-  COMMAND rospack plugins --attrib=mdl_path matlab_ros_bridge
-  OUTPUT_VARIABLE MSG_TYPES OUTPUT_STRIP_TRAILING_WHITESPACE)
-  
-if("${MSG_TYPES} " STREQUAL " ")
-  if(FoundPosition EQUAL -1)
-    message(WARNING "We didn't find any plugin! You might need to run\n source ${CATKIN_DEVEL_PREFIX}/setup.bash\nbefore you can generate the library.")
-  else()
-    string(LENGTH ${CATKIN_DEVEL_PREFIX} CATKIN_DEVEL_PREFIX_LENGTH)
-    string(LENGTH ${PROJECT_NAME} PROJECT_NAME_LENGTH)
-    math(EXPR CATKIN_DEVEL_BASE_PREFIX_LENGTH  "${CATKIN_DEVEL_PREFIX_LENGTH} - ${PROJECT_NAME_LENGTH} - 1") 
-    string(SUBSTRING ${CATKIN_DEVEL_PREFIX} 0 ${CATKIN_DEVEL_BASE_PREFIX_LENGTH} CATKIN_DEVEL_BASE_PREFIX)
-    message(WARNING "We didn't find any plugin! You might need to run\n source ${CATKIN_DEVEL_BASE_PREFIX}/setup.bash\nbefore you can generate the library.")
-  endif()
-else()
-    string(REGEX REPLACE "\n" ";" MSG_TYPES ${MSG_TYPES})
-    #separate_arguments(MSG_TYPES)
-    foreach(MSG_TYPE ${MSG_TYPES})
-      #string(REGEX REPLACE " " ";" MSG_TYPE ${MSG_TYPE})
-      separate_arguments(MSG_TYPE)
-      list(GET MSG_TYPE 0 PKG_TYPE)
-      list(GET MSG_TYPE 1 MDL_PATH)
-      execute_process(
-  	COMMAND rospack find ${PKG_TYPE}
-  	OUTPUT_VARIABLE ${PKG_TYPE}_PATH OUTPUT_STRIP_TRAILING_WHITESPACE)
-      set(INSTALLED_MRB_PACKAGES "${INSTALLED_MRB_PACKAGES} '${PKG_TYPE}'")
-      set(MDL_PATHS "${MDL_PATHS} '${${PKG_TYPE}_PATH}/${MDL_PATH}'")
-      set(SRC_PATHS "${SRC_PATHS} '${${PKG_TYPE}_PATH}/src/${PKG_TYPE}'")
-    endforeach(MSG_TYPE)
-    
-    set(SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-    set(SFUN_PATH "${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_LIB_DESTINATION}")
-    
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/generate_model.m.cmake ${CMAKE_BINARY_DIR}/generate_model.m)
-    
-    add_custom_target(generate_library 
-        COMMAND ${MATLAB_EXE} -nodesktop -nosplash -r \"cd\('${CMAKE_BINARY_DIR}'\)\; run generate_model.m\; exit\"
-        COMMAND mv ros_msgs.slx setup.m ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}
-        COMMAND cp ${PROJECT_SOURCE_DIR}/models/slblocks.m ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-        
-endif()
-
 #############
 ## Install ##
 #############
@@ -259,13 +223,6 @@ endif()
 ## Mark executables and/or libraries for installation
 
 ## Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-   FILES_MATCHING PATTERN "*.hpp"
-   PATTERN ".svn" EXCLUDE
-   PATTERN "CMakeFiles" EXCLUDE
-)
-
 install(DIRECTORY src/
    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/src
    FILES_MATCHING PATTERN "*.cpp"
@@ -273,21 +230,15 @@ install(DIRECTORY src/
    PATTERN "CMakeFiles" EXCLUDE
 )
 
-install(DIRECTORY models/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/models
-  PATTERN ".svn" EXCLUDE
-  PATTERN "CMakeFiles" EXCLUDE
-)  
-
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 install(FILES
-   ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_LIB_DESTINATION}/rtwmakecfg.m
+   ${${PROJECT_NAME}_MEX_DESTINATION}/rtwmakecfg.m
    DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
 #install(FILES
 #   startup_${PROJECT_NAME}.m
-#   DESTINATION "."
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 #)
 
 #############
