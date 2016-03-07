@@ -79,7 +79,6 @@
    */
   static void mdlCheckParameters(SimStruct *S)
   {
-	//  SFUNPRINTF("Calling mdlCheckParameters");
     
     // Tsim
 	if (mxIsEmpty( ssGetSFcnParam(S,0)) ||
@@ -104,11 +103,12 @@
             mxIsSparse( ssGetSFcnParam(S,2)) ||
             mxIsComplex( ssGetSFcnParam(S,2)) ||
             mxIsLogical( ssGetSFcnParam(S,2)) ||
-            !mxIsChar( ssGetSFcnParam(S,2)) ||
+			!mxIsChar(ssGetSFcnParam(S,2)) || //ssGetDTypeIdFromMxArray(ssGetSFcnParam(S,2))!=SS_UINT32 ||
             mxGetNumberOfElements(ssGetSFcnParam(S,2)) != 1) {
         ssSetErrorStatus(S,"String length must be a char");
         return;
     }
+
   }
 #endif /* MDL_CHECK_PARAMETERS */
 
@@ -171,10 +171,10 @@ static void mdlInitializeSizes(SimStruct *S)
 
     if (!ssSetNumInputPorts(S, 1)) return;
 
-    const mxChar strLength = *((mxChar*)mxGetData(ssGetSFcnParam(S, 4)));
-
+    //const uint32_T strLength = *((uint32_T*)mxGetData(ssGetSFcnParam(S, 2)));
+    const mxChar strLength = *((mxChar*)mxGetData(ssGetSFcnParam(S, 2)));
     ssSetInputPortMatrixDimensions(S, 0, 1, strLength); // string
-    ssSetOutputPortDataType(S, 1, SS_UINT8);
+    ssSetInputPortDataType(S, 0, SS_UINT8);
 
 	for (int_T i = 0; i < ssGetNumInputPorts(S); ++i) {
 		/*direct input signal access*/
@@ -257,6 +257,7 @@ static void mdlStart(SimStruct *S)
 
     void** vecPWork = ssGetPWork(S);
 
+//    ssGetIWork(S)[0] = *((uint32_T*)mxGetData(ssGetSFcnParam(S, 2)));
     ssGetIWork(S)[0] = *((mxChar*)mxGetData(ssGetSFcnParam(S, 2)));
 
     ros::NodeHandle nodeHandle(ros::this_node::getName());
@@ -273,6 +274,7 @@ static void mdlStart(SimStruct *S)
 
     // free char array
     mxFree(prefix_topic);
+
   }
 #endif /*  MDL_START */
 
@@ -285,20 +287,22 @@ static void mdlStart(SimStruct *S)
  */
 static void mdlOutputs(SimStruct *S, int_T tid)
 {   
+
     // get Objects
     void** vecPWork = ssGetPWork(S);
+    //const uint32_T strLength = ssGetIWork(S)[0];
     const mxChar strLength = ssGetIWork(S)[0];
 
     // get Pointers
     // accessing inputs
-    uint8_T* txt = (uint8_T*)ssGetOutputPortSignal(S,0);
+    uint8_T* txt = (uint8_T*)ssGetInputPortSignal(S,0);
     
     std_msgs::String msg;
     msg.data.resize(strLength);
-//    memcpy(msg.data.data(), txt, strLength*sizeof(char));
-    for (unsigned int i=0; i < strLength; i++) {
-    	msg.data[i] = (char)txt[i];
-    }
+    memcpy(&msg.data[0], (char*)txt, strLength*sizeof(char));
+//    for (unsigned int i=0; i < strLength; ++i) {
+//    	msg.data[i] = (char)txt[i];
+//    }
 
 	GenericPublisher<std_msgs::String>* pub
 			= (GenericPublisher<std_msgs::String>*)vecPWork[0];
@@ -349,14 +353,8 @@ static void mdlTerminate(SimStruct *S)
 {
     // get Objects
     void** vecPWork = ssGetPWork(S);
-
-    int_T nRobots = *ssGetIWork(S);
-    for (unsigned int i = 0; i < nRobots; ++i) {
-        GenericPublisher<std_msgs::String>* pub = (GenericPublisher<std_msgs::String>*)vecPWork[i];
-        // cleanup
-        delete pub;
-	}
-
+    GenericPublisher<std_msgs::String>* pub = (GenericPublisher<std_msgs::String>*)vecPWork[0];
+    delete pub;
 
     SFUNPRINTF("Terminating Instance of %s.\n", TOSTRING(S_FUNCTION_NAME));
 }
