@@ -290,7 +290,8 @@ static void mdlOutputs(SimStruct *S, int_T tid)
 
     // get Objects
     void** vecPWork = ssGetPWork(S);
-    const uint32_T strLength = ssGetIWork(S)[0];
+    //const uint32_T strLength = ssGetIWork(S)[0];
+    const mxChar strLength = ssGetIWork(S)[0];
 
     // get Pointers
     // accessing inputs
@@ -298,7 +299,7 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     
     std_msgs::String msg;
     msg.data.resize(strLength);
-    memcpy(&msg.data[0], (char*)txt, strLength*sizeof(uint8_T));
+    memcpy(&msg.data[0], (char*)txt, strLength*sizeof(char));
 //    for (unsigned int i=0; i < strLength; ++i) {
 //    	msg.data[i] = (char)txt[i];
 //    }
