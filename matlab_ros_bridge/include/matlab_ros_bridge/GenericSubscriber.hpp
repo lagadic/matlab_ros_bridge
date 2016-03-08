@@ -58,70 +58,93 @@
 
 class GenericSubscriber_base {
 public:
-    static
-    void resetSemaphore(sem_t* sem){
-    	int valp;
-    	sem_getvalue(sem, &valp);
-    	while ( valp > 0){
-    		sem_wait(sem);
-    		sem_getvalue(sem, &valp);
-    	}
-    }
+	static
+	void resetSemaphore(sem_t* sem){
+		int valp;
+		sem_getvalue(sem, &valp);
+		while ( valp > 0){
+			sem_wait(sem);
+			sem_getvalue(sem, &valp);
+		}
+	}
 
-    static
-    std::string generateSemaphoreName(std::string const & topicName) {
-    	std::string semName(topicName);
-    	if (topicName[0] == '/'){
-    		semName.erase(0,1);
-    	}
-    	std::replace(semName.begin(), semName.end(), '/', '_');
-    	semName = "slk." + semName;
-    	return semName;
-    }
+	static
+	std::string generateSemaphoreName(std::string const & topicName) {
+		std::string semName(topicName);
+		if (topicName[0] == '/'){
+			semName.erase(0,1);
+		}
+		std::replace(semName.begin(), semName.end(), '/', '_');
+		semName = "slk." + semName;
+		return semName;
+	}
 };
 
 template <class T_>
 class GenericSubscriber : public GenericSubscriber_base {
 protected:
-    boost::shared_ptr<T_ const> lastMsg;
-    mutable boost::mutex lastMsgLock;
-    const std::string semName;
-    sem_t * newMsg;
+	boost::shared_ptr<T_ const> lastMsg;
+	mutable boost::mutex lastMsgLock;
+	const std::string semName;
+	sem_t * newMsg;
+	const std::string tName;
 
-    // Subscriber
-    ros::Subscriber sub;
+	// Subscriber
+	ros::Subscriber sub;
 
-    void msgCallback(boost::shared_ptr<T_ const> msg) {
-        boost::mutex::scoped_lock lock(lastMsgLock);
-        lastMsg = msg;
-//        sem_post(newMsg);
-    }
+	void msgCallback(boost::shared_ptr<T_ const> msg) {
+		boost::mutex::scoped_lock lock(lastMsgLock);
+		lastMsg = msg;
+		sem_post(newMsg);
+	}
 
 public:
 
-    GenericSubscriber(ros::NodeHandle handle, const std::string& topicName, int queue_size) :
-	semName(generateSemaphoreName(topicName)),
-	newMsg(sem_open(semName.c_str(), O_CREAT, 0644, 0)),
-	sub(handle.subscribe(topicName, queue_size, &GenericSubscriber<T_>::msgCallback, this)){
-//    	std::cout << "Opening semaphore in " << __func__ << " in file /dev/shm/sem." << semName << std::endl;
+	std::string getTopicName(){return tName;};
 
-    	if (newMsg == SEM_FAILED){
-    		//TODO: ssSetErrorStatus(S, strerror(errno));
-//    		std::cout << " returned SEM_FAILED with error: " << strerror(errno);
-    	}
-    }
+	void resetSem(){
+		boost::mutex::scoped_lock lock(lastMsgLock);
+		resetSemaphore(newMsg);
+	}
 
-    virtual ~GenericSubscriber() {
-        boost::mutex::scoped_lock lock(lastMsgLock);
-//        lastMsg = boost::shared_ptr<T_ const> (new T_);
-    	sem_close(newMsg);
-    	sem_unlink(semName.c_str());
-    }
+	int waitMsg(const double timeout=-1){
+		if (timeout<0){
+			return sem_wait(newMsg);
+		} else {
+			const int wait_sec = (int) timeout;
+			const int wait_nsec = (int)((timeout - (int)timeout)*1e9);
+			timespec waitSpec;
+			clock_gettime(CLOCK_REALTIME, &waitSpec);
+			waitSpec.tv_sec += wait_sec;
+			waitSpec.tv_nsec += wait_nsec;
+			return sem_timedwait(newMsg, &waitSpec);
+		}
+	}
 
-    boost::shared_ptr<T_ const> getLastMsg() const {
-        boost::mutex::scoped_lock lock(lastMsgLock);
-        return lastMsg;
-    }
+	GenericSubscriber(ros::NodeHandle handle, const std::string& topicName, int queue_size) :
+		semName(generateSemaphoreName(topicName)),
+		newMsg(sem_open(semName.c_str(), O_CREAT, 0644, 0)),
+		sub(handle.subscribe(topicName, queue_size, &GenericSubscriber<T_>::msgCallback, this)),
+		tName(topicName){
+		//    	std::cout << "Opening semaphore in " << __func__ << " in file /dev/shm/sem." << semName << std::endl;
+
+		if (newMsg == SEM_FAILED){
+			//TODO: ssSetErrorStatus(S, strerror(errno));
+			//    		std::cout << " returned SEM_FAILED with error: " << strerror(errno);
+		}
+	}
+
+	virtual ~GenericSubscriber() {
+		boost::mutex::scoped_lock lock(lastMsgLock);
+		//        lastMsg = boost::shared_ptr<T_ const> (new T_);
+		sem_close(newMsg);
+		sem_unlink(semName.c_str());
+	}
+
+	boost::shared_ptr<T_ const> getLastMsg() const {
+		boost::mutex::scoped_lock lock(lastMsgLock);
+		return lastMsg;
+	}
 
 };
 
