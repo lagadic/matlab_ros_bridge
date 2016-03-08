@@ -87,6 +87,7 @@ protected:
 	mutable boost::mutex lastMsgLock;
 	const std::string semName;
 	sem_t * newMsg;
+	const std::string tName;
 
 	// Subscriber
 	ros::Subscriber sub;
@@ -98,6 +99,8 @@ protected:
 	}
 
 public:
+
+	std::string getTopicName(){return tName;};
 
 	void resetSem(){
 		boost::mutex::scoped_lock lock(lastMsgLock);
@@ -121,7 +124,8 @@ public:
 	GenericSubscriber(ros::NodeHandle handle, const std::string& topicName, int queue_size) :
 		semName(generateSemaphoreName(topicName)),
 		newMsg(sem_open(semName.c_str(), O_CREAT, 0644, 0)),
-		sub(handle.subscribe(topicName, queue_size, &GenericSubscriber<T_>::msgCallback, this)){
+		sub(handle.subscribe(topicName, queue_size, &GenericSubscriber<T_>::msgCallback, this)),
+		tName(topicName){
 		//    	std::cout << "Opening semaphore in " << __func__ << " in file /dev/shm/sem." << semName << std::endl;
 
 		if (newMsg == SEM_FAILED){
