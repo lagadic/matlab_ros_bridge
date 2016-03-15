@@ -40,53 +40,19 @@
 #define GENERICSUBSCRIBER_HPP_
 
 #include <boost/thread/mutex.hpp>
-
-#include <semaphore.h>
-//#include <sys/sem.h>
-//#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-
+#include <boost/asio.hpp>
+#include <boost/thread/thread.hpp>
 
 #include <ros/node_handle.h>
 
-
-#ifndef GENERATESEMAPHORENAME
-#define GENERATESEMAPHORENAME
-
-#endif
-
-class GenericSubscriber_base {
-public:
-	static
-	void resetSemaphore(sem_t* sem){
-		int valp;
-		sem_getvalue(sem, &valp);
-		while ( valp > 0){
-			sem_wait(sem);
-			sem_getvalue(sem, &valp);
-		}
-	}
-
-	static
-	std::string generateSemaphoreName(std::string const & topicName) {
-		std::string semName(topicName);
-		if (topicName[0] == '/'){
-			semName.erase(0,1);
-		}
-		std::replace(semName.begin(), semName.end(), '/', '_');
-		semName = "slk." + semName;
-		return semName;
-	}
-};
-
 template <class T_>
-class GenericSubscriber : public GenericSubscriber_base {
+class GenericSubscriber {
 protected:
 	boost::shared_ptr<T_ const> lastMsg;
 	mutable boost::mutex lastMsgLock;
-	const std::string semName;
-	sem_t * newMsg;
+	bool newMsgReceived;
+	boost::condition_variable newMsgCondition;
+
 	const std::string tName;
 
 	// Subscriber
@@ -95,7 +61,8 @@ protected:
 	void msgCallback(boost::shared_ptr<T_ const> msg) {
 		boost::mutex::scoped_lock lock(lastMsgLock);
 		lastMsg = msg;
-		sem_post(newMsg);
+		newMsgReceived = true;
+		newMsgCondition.notify_one();
 	}
 
 public:
@@ -104,45 +71,38 @@ public:
 
 	void resetSem(){
 		boost::mutex::scoped_lock lock(lastMsgLock);
-		resetSemaphore(newMsg);
+		newMsgReceived = false;
 	}
 
 	int waitMsg(const double timeout=-1){
+		boost::mutex::scoped_lock lock(lastMsgLock);
 		if (timeout<0){
-			return sem_wait(newMsg);
+			while (!newMsgReceived) newMsgCondition.wait(lock);
 		} else {
-			const int wait_sec = (int) timeout;
-			const int wait_nsec = (int)((timeout - (int)timeout)*1e9);
-			timespec waitSpec;
-			clock_gettime(CLOCK_REALTIME, &waitSpec);
-			waitSpec.tv_sec += wait_sec;
-			waitSpec.tv_nsec += wait_nsec;
-			return sem_timedwait(newMsg, &waitSpec);
+			boost::system_time const waitTime = boost::get_system_time() + boost::posix_time::seconds(timeout);
+			while (!newMsgReceived){
+				if(!newMsgCondition.timed_wait(lock, waitTime)){
+					return -1;
+				}
+			}
 		}
+		return 0;
 	}
 
 	GenericSubscriber(ros::NodeHandle handle, const std::string& topicName, int queue_size) :
-		semName(generateSemaphoreName(topicName)),
-		newMsg(sem_open(semName.c_str(), O_CREAT, 0644, 0)),
+		newMsgReceived(false),
 		sub(handle.subscribe(topicName, queue_size, &GenericSubscriber<T_>::msgCallback, this)),
 		tName(topicName){
-		//    	std::cout << "Opening semaphore in " << __func__ << " in file /dev/shm/sem." << semName << std::endl;
 
-		if (newMsg == SEM_FAILED){
-			//TODO: ssSetErrorStatus(S, strerror(errno));
-			//    		std::cout << " returned SEM_FAILED with error: " << strerror(errno);
-		}
 	}
 
 	virtual ~GenericSubscriber() {
 		boost::mutex::scoped_lock lock(lastMsgLock);
-		//        lastMsg = boost::shared_ptr<T_ const> (new T_);
-		sem_close(newMsg);
-		sem_unlink(semName.c_str());
 	}
 
-	boost::shared_ptr<T_ const> getLastMsg() const {
+	boost::shared_ptr<T_ const> getLastMsg() {
 		boost::mutex::scoped_lock lock(lastMsgLock);
+		newMsgReceived = false;
 		return lastMsg;
 	}
 
