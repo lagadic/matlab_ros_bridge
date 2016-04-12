@@ -13,8 +13,8 @@ The software is released under the BSD license. See the LICENSE file in this rep
 ##Configuring Matlab
 
 Before proceeding with the next steps you need to configure Matlab mex compiler.
-If you have not done it yet, run matlab and type this command in the command window:
-        
+ 
+For Matlab 2014b and older, run matlab and type the following command in the command window:
 ```matlab
 mex -setup
 ```
@@ -23,6 +23,16 @@ When you get the following message:
     Enter the number of the compiler (0-1):
     
 Enter 1 to select the first option. This should create a mex option file in ~/.matlab/R2014a/mexopts.sh.
+Open this file and make sure that the correct version of the gnu compiler is used.
+
+For Matlab 2015a and newer, run matlab and type the following commands in the command window
+```matlab
+mex -setup
+mex -setup C++
+```
+This should create two files in ~/.matlab/<matlab_version>/ named mex_C_glnxa64.xml and mex_C++_glnxa64.xml.
+Open mex_C++_glnxa64.xml and substitute all instances of "g++" and "$GCC" with "g++-4.7" (or 4.4 for older versions of Matlab).
+Open mex_C_glnxa64.xml and substitute all instances of "gcc" and "$GCC" with "gcc-4.7" (or 4.4 for older versions of Matlab).
 
 ##Compiling the bridge
 
@@ -87,24 +97,26 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
 8. Compile ros and the bridge with:
 
     ```bash
-    $ catkin_make_isolated --cmake-args -DBOOST_ROOT=path/to/boost/installation/prefix -DBoost_NO_SYSTEM_PATHS=ON -DCMAKE_C_COMPILER=/usr/bin/gcc-4.4 -DCMAKE_CXX_COMPILER=/usr/bin/g++-4.4 -DMATLAB_DIR=/usr/local/MATLAB/R2012b
+    $ catkin_make --cmake-args -DBOOST_ROOT=path/to/boost/installation/prefix -DBoost_NO_SYSTEM_PATHS=ON -DCMAKE_C_COMPILER=/usr/bin/gcc-4.7 -DCMAKE_CXX_COMPILER=/usr/bin/g++-4.7 -DMATLAB_DIR=/usr/local/MATLAB/R2015b
     ```
     note that you might need to change this command according to your <boost_dir>, Matlab path and compiler version.
     Add `install` at the end or run `catkin_make install` if desired.
+    For old versions of ROS (before Indigo) you may need to use the command `catkin_make_isolated` instead of `catkin_make`.
+    Note: the incompatibility issue discussed in the previous section might cause `rosbag` (and possibly other packages) to fail building. If this is the case, either substitute all occurrences of `TIME_UTC` in all rosbag source files with `TIME_UTC_` or add `-DCMAKE_CXX_FLAGS=-U_GNU_SOURCE` to your `catkin_make` command above.
 
-9. Navigate in a terminal to the build directory of the package `matlab_ros_bridge`. It should be in `catkin_ws/build_isolated/matlab_ros_bridge`.
-    Make sure you have "sourced" your workspace by running:
+9. Make sure you have "sourced" your workspace by running:
 
     ```bash
     $ source /path/to/your/catkin_ws/devel_isolated/setup.bash
     $ cmake .
     ````
-    Now generate the simulink block library by running:
+    
+    Navigate to the build directory of the package `matlab_ros_bridge`. It should be  `catkin_ws/build/` or `catkin_ws/build_isolated/matlab_ros_bridge` if you used `catkin_make_isolated`. Now generate the simulink block library by running:
 
     ```bash
+    $ cmake .
     $ make generate_library
     ```
-Note: the incompatibility issue discussed in the previous section might cause `rosbag` (and possibly other packages) to fail building. If this is the case, either substitute all occurrences of `TIME_UTC` in all rosbag source files with `TIME_UTC_` or add `-DCMAKE_CXX_FLAGS=-U_GNU_SOURCE` to your `catkin_make_isolated` command in step 4.
 
 ###Running MATLAB
 
@@ -145,11 +157,14 @@ Matlab version  | gcc supported version | shipped boost vesion | compiled boost 
 2013a  | GNU gcc/g++ 4.4.x | [1.49.0](http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz/download) | [boost_1_49_0_gcc_4_4.tar.bz2](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_1_49_0_gcc_4_4.tar.bz2) | [boost_R2013a_x64.tar.gz](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_R2013a_x64.tar.gz)
 2013b  | GNU gcc/g++ 4.7.x | [1.49.0](http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz/download) | [boost_1_49_0_gcc_4_7.tar.bz2](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_1_49_0_gcc_4_7.tar.bz2) | [boost_R2013b_x64.tar.gz](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_R2013b_x64.tar.gz)
 2014a  | GNU gcc/g++ 4.7.x | [1.49.0](http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz/download) | [boost_1_49_0_gcc_4_7.tar.bz2](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_1_49_0_gcc_4_7.tar.bz2) | [boost_R2014a_x64.tar.gz](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_R2014a_x64.tar.gz)
+2015a  | GNU gcc/g++ 4.7.x | [1.49.0](http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz/download) | [boost_1_49_0_gcc_4_7.tar.bz2](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_1_49_0_gcc_4_7.tar.bz2) | [boost_R2014a_x64.tar.gz](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_R2015a_x64.tar.gz)
+2015b  | GNU gcc/g++ 4.7.x | [1.49.0](http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz/download) | [boost_1_49_0_gcc_4_7.tar.bz2](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_1_49_0_gcc_4_7.tar.bz2) | [boost_R2014a_x64.tar.gz](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_R2015b_x64.tar.gz)
 
 ##Ros/Matlab combinatios that have already been tested:
 
-Ros\Matlab  | __2012a__ | __2012b__ | __2013a__ | __2013b__ | __2014a__ | __2014b__ |
------------ | --------- | --------- | --------- | --------- | --------- | --------- |
-__Groovy__ | never tested | never tested | never tested | never tested | never tested | never tested |
-__Hydro__ | never tested | never tested | never tested | working | working | never tested |
-__Indigo__ | never tested | never tested | never tested | never tested | working | never tested |
+Ros\Matlab  | __2012a__ | __2012b__ | __2013a__ | __2013b__ | __2014a__ | __2014b__ | __2015a__ | __2015b__ |
+----------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+__Groovy__ | never tested | never tested | never tested | never tested | never tested | never tested | never tested | never tested |
+__Hydro__ | never tested | never tested | never tested | working | working | never tested | never tested | never tested |
+__Indigo__ | never tested | never tested | never tested | never tested | working | working | working | working |
+__Jade__ | never tested | never tested | never tested | never tested | never tested | never tested | never tested | never tested |
