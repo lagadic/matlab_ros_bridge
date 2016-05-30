@@ -191,6 +191,7 @@ static void mdlStart(SimStruct *S)
     SFUNPRINTF("Starting Instance of %s.\n", TOSTRING(S_FUNCTION_NAME));
     
     void** vecPWork = ssGetPWork(S);
+    ros::Time::init();
     ros::Time* firstExecTime = new ros::Time(ros::Time::now());
     vecPWork[0] = firstExecTime;
 
