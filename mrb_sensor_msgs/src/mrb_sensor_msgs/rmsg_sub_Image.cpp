@@ -195,10 +195,14 @@ static void mdlInitializeSizes(SimStruct *S)
 	mxChar* res = (mxChar*)mxGetData(ssGetSFcnParam(S, 2));
 
 	//TODO: improve
+	std::string encoding;
+	{
 	const size_t encodingLength = mxGetN((ssGetSFcnParam(S, 3)))*sizeof(mxChar)+1;
 	char* tmp = (char*)mxMalloc(encodingLength);
 	mxGetString((ssGetSFcnParam(S, 3)), tmp, encodingLength);
-	std::string encoding(tmp);
+	encoding = std::string(tmp);
+	mxFree(tmp);
+	}
 
 	// Set image output port dimensions and type
 	int_T dims[3];
@@ -207,7 +211,12 @@ static void mdlInitializeSizes(SimStruct *S)
 	dims[2] = sensor_msgs::image_encodings::numChannels(encoding);
 
 	DimsInfo_T dimsInfo;
-	dimsInfo.numDims = 2;
+	if (dims[2]>1){
+		dimsInfo.numDims = 3;
+		ssAllowSignalsWithMoreThan2D(S);
+	} else {
+		dimsInfo.numDims = 2;
+	}
 	dimsInfo.dims = dims;
 	dimsInfo.width = dims[0]*dims[1]*dims[2];
 	ssSetOutputPortDimensionInfo(S, 0, &dimsInfo);
@@ -380,71 +389,47 @@ static void mdlOutputs(SimStruct *S, int_T tid)
 
 	// Preparing Outputs
 	//TODO: improve if possible
+	std::string encoding;
+	{
 	const size_t encodingLength = mxGetN((ssGetSFcnParam(S, 3)))*sizeof(mxChar)+1;
 	char* tmp = (char*)mxMalloc(encodingLength);
 	mxGetString((ssGetSFcnParam(S, 3)), tmp, encodingLength);
-	std::string encoding(tmp);
-
-	real_T *time = (real_T*)ssGetOutputPortSignal(S,1);
-	uint32_T *id = (uint32_T*)ssGetOutputPortSignal(S,2);
+	encoding = std::string(tmp);
+	mxFree(tmp);
+	}
 
 	int_T* res = ssGetOutputPortDimensions(S, 0);
 
-	GenericSubscriber<sensor_msgs::Image>* sub
-	= (GenericSubscriber<sensor_msgs::Image>*)vecPWork[0];
+	GenericSubscriber<sensor_msgs::Image>* sub = (GenericSubscriber<sensor_msgs::Image>*)vecPWork[0];
 
 	sensor_msgs::ImageConstPtr lastMsg = sub->getLastMsg();
 	if (lastMsg){ // copy only if a message was actually received
 
 		if (lastMsg->width == res[1] && lastMsg->height == res[0] && lastMsg->encoding == encoding){
 
-			const int numCh = sensor_msgs::image_encodings::numChannels(encoding);
+			const int chNum = sensor_msgs::image_encodings::numChannels(encoding);
+			const int colNum = res[1];
+			const int rowNum = res[0];
+			const int chSize = sensor_msgs::image_encodings::bitDepth(encoding)/8;
+			const int pixSize = chSize*chNum;
 
-			for (unsigned int chIdx = 0; chIdx<numCh; ++chIdx){
-				for (unsigned int colIdx = 0; colIdx<res[1]; ++colIdx){
-					for (unsigned int rowIdx = 0; rowIdx<res[0]; ++rowIdx){
-						const void* pixel = lastMsg->data.data()+rowIdx*lastMsg->step;
-						if (sensor_msgs::image_encodings::bitDepth(encoding) == 8){
-							uint8_T* img = (uint8_T*)ssGetOutputPortSignal(S,0);
-							img[rowIdx+colIdx*res[0]+chIdx*res[0]*res[1]] =
-									reinterpret_cast<const uint8_T*>(pixel)[colIdx*numCh+chIdx];
+			uint8_T* port = reinterpret_cast<uint8_T*>(ssGetOutputPortSignal(S,0));
+			const uint8_T* msg = reinterpret_cast<const uint8_T*>(lastMsg->data.data());
 
-						} else if (sensor_msgs::image_encodings::bitDepth(encoding) == 16) {
-							uint16_T* img = (uint16_T*)ssGetOutputPortSignal(S,0);
-							img[rowIdx+colIdx*res[0]+chIdx*res[0]*res[1]] =
-									reinterpret_cast<const uint16_T*>(pixel)[colIdx*numCh+chIdx];
-
-						} else if (sensor_msgs::image_encodings::bitDepth(encoding) == 32) {
-							if (encoding == sensor_msgs::image_encodings::TYPE_32FC1 ||
-									encoding == sensor_msgs::image_encodings::TYPE_32FC2 ||
-									encoding == sensor_msgs::image_encodings::TYPE_32FC3 ||
-									encoding == sensor_msgs::image_encodings::TYPE_32FC4){
-								real32_T* img = (real32_T*)ssGetOutputPortSignal(S,0);
-								img[rowIdx+colIdx*res[0]+chIdx*res[0]*res[1]] =
-										reinterpret_cast<const real32_T*>(pixel)[colIdx*numCh+chIdx];
-							} else {
-								uint32_T* img = (uint32_T*)ssGetOutputPortSignal(S,0);
-								img[rowIdx+colIdx*res[0]+chIdx*res[0]*res[1]] =
-										reinterpret_cast<const uint32_T*>(pixel)[colIdx*numCh+chIdx];
-							}
-						} else if (sensor_msgs::image_encodings::bitDepth(encoding) == 64) {
-							real64_T* img = (real64_T*)ssGetOutputPortSignal(S,0);
-							img[rowIdx+colIdx*res[0]+chIdx*res[0]*res[1]] =
-									reinterpret_cast<const real64_T*>(pixel)[colIdx*numCh+chIdx];
-
-						} else {
-							ssSetErrorStatus(S, "The specified image encoding string is not supported. This should never happen!");
-							return;
-						}
-
-
+//#pragma omp parallel for
+			for (unsigned int colIdx = 0; colIdx<colNum; ++colIdx){
+				for (unsigned int rowIdx = 0; rowIdx<rowNum; ++rowIdx){
+					for (unsigned int chIdx = 0; chIdx<chNum; ++chIdx){
+						memcpy(&port[chSize*(rowIdx + rowNum*(colIdx + colNum*chIdx))],
+								&msg[rowIdx*lastMsg->step + colIdx*pixSize + chIdx*chSize], chSize);
 					}
 				}
 			}
 
-
-
-
+			real_T *time = (real_T*)ssGetOutputPortSignal(S,1);
+			uint32_T *id = (uint32_T*)ssGetOutputPortSignal(S,2);
+			time[0] = lastMsg->header.stamp.toSec();
+			id[0] = lastMsg->header.seq;
 		} else {
 			std::stringstream ss;
 			ss << "Unexpected image resolution or encoding. " <<
@@ -455,8 +440,7 @@ static void mdlOutputs(SimStruct *S, int_T tid)
 			return;
 		}
 
-		time[0] = lastMsg->header.stamp.toSec();
-		id[0] = lastMsg->header.seq;
+
 	}
 
 }
