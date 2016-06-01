@@ -159,6 +159,7 @@ set(SOURCES
   rmsg_sub_Vector3Stamped.cpp
   rmsg_sub_WrenchStamped.cpp
   rmsg_pub_WrenchStamped.cpp
+  rmsg_pub_PolygonStamped.cpp
 )
 
 string(FIND ${CATKIN_DEVEL_PREFIX} ${PROJECT_NAME} FoundPosition REVERSE)
