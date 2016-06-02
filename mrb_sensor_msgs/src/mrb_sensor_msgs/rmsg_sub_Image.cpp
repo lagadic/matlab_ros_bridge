@@ -72,62 +72,55 @@
 
 #define MDL_CHECK_PARAMETERS
 #if defined(MDL_CHECK_PARAMETERS) && defined(MATLAB_MEX_FILE)
-  /* Function: mdlCheckParameters =============================================
-   * Abstract:
-   *    Validate our parameters to verify:
-   *     o The numerator must be of a lower order than the denominator.
-   *     o The sample time must be a real positive nonzero value.
-   */
-  static void mdlCheckParameters(SimStruct *S)
-  {
-    //  SFUNPRINTF("Calling mdlCheckParameters");
-    
-    // Tsim
-    if (mxIsEmpty( ssGetSFcnParam(S,0)) ||
-            mxIsSparse( ssGetSFcnParam(S,0)) ||
-            mxIsComplex( ssGetSFcnParam(S,0)) ||
-            mxIsLogical( ssGetSFcnParam(S,0)) ||
-            !mxIsNumeric( ssGetSFcnParam(S,0)) ||
-            !mxIsDouble( ssGetSFcnParam(S,0)) ||
-            mxGetNumberOfElements(ssGetSFcnParam(S,0)) != 1) {
-        ssSetErrorStatus(S,"Simulation time must be a single double Value");
-        return;
-    }
+/* Function: mdlCheckParameters =============================================
+ * Abstract:
+ *    Validate our parameters to verify:
+ *     o The numerator must be of a lower order than the denominator.
+ *     o The sample time must be a real positive nonzero value.
+ */
+static void mdlCheckParameters(SimStruct *S)
+{
+	//  SFUNPRINTF("Calling mdlCheckParameters");
 
-    // Prefix Topic
-    if (!mxIsChar( ssGetSFcnParam(S,1)) ) {
-        ssSetErrorStatus(S,"Prefix value must be char array (string)");
-        return;
-    }
+	// Tsim
+	if (mxIsEmpty( ssGetSFcnParam(S,0)) ||
+			mxIsSparse( ssGetSFcnParam(S,0)) ||
+			mxIsComplex( ssGetSFcnParam(S,0)) ||
+			mxIsLogical( ssGetSFcnParam(S,0)) ||
+			!mxIsNumeric( ssGetSFcnParam(S,0)) ||
+			!mxIsDouble( ssGetSFcnParam(S,0)) ||
+			mxGetNumberOfElements(ssGetSFcnParam(S,0)) != 1) {
+		ssSetErrorStatus(S,"Simulation time must be a single double Value");
+		return;
+	}
 
-    // Robot Array
-    if (mxIsEmpty( ssGetSFcnParam(S,2)) ||
-            mxIsSparse( ssGetSFcnParam(S,2)) ||
-            mxIsComplex( ssGetSFcnParam(S,2)) ||
-            mxIsLogical( ssGetSFcnParam(S,2)) ||
-            !mxIsChar( ssGetSFcnParam(S,2)) ) {
-        ssSetErrorStatus(S,"Robot Vector must be a char vector of robot ids");
-        return;
-    }
+	// Prefix Topic
+	if (!mxIsChar( ssGetSFcnParam(S,1)) ) {
+		ssSetErrorStatus(S,"Prefix value must be char array (string)");
+		return;
+	}
 
-    // Postfix Topic
-    if (!mxIsChar( ssGetSFcnParam(S,3)) ) {
-        ssSetErrorStatus(S,"Postfix value must be char array (string)");
-        return;
-    }
+	// Resolution
+	if (mxIsEmpty( ssGetSFcnParam(S,2)) ||
+			mxIsSparse( ssGetSFcnParam(S,2)) ||
+			mxIsComplex( ssGetSFcnParam(S,2)) ||
+			mxIsLogical( ssGetSFcnParam(S,2)) ||
+			!mxIsChar( ssGetSFcnParam(S,2)) ||
+			mxGetNumberOfElements(ssGetSFcnParam(S,2)) != 2) {
+		ssSetErrorStatus(S,"Resolution must be a vector of two char values");
+		return;
+	}
 
-
-    // Resolution
-    if (mxIsEmpty( ssGetSFcnParam(S,4)) ||
-            mxIsSparse( ssGetSFcnParam(S,4)) ||
-            mxIsComplex( ssGetSFcnParam(S,4)) ||
-            mxIsLogical( ssGetSFcnParam(S,4)) ||
-            !mxIsChar( ssGetSFcnParam(S,4)) ||
-            mxGetNumberOfElements(ssGetSFcnParam(S,4)) != 2) {
-        ssSetErrorStatus(S,"Resolution must be a vector of two char values");
-        return;
-    }
-  }
+	// Encoding
+	if (mxIsEmpty( ssGetSFcnParam(S,3)) ||
+			mxIsSparse( ssGetSFcnParam(S,3)) ||
+			mxIsComplex( ssGetSFcnParam(S,3)) ||
+			mxIsLogical( ssGetSFcnParam(S,3)) ||
+			!mxIsChar( ssGetSFcnParam(S,3))) {
+		ssSetErrorStatus(S,"Encoding must be a string");
+		return;
+	}
+}
 #endif /* MDL_CHECK_PARAMETERS */
 
 
@@ -170,56 +163,139 @@
  */
 static void mdlInitializeSizes(SimStruct *S)
 {
-    /* See sfuntmpl_doc.c for more details on the macros below */
+	/* See sfuntmpl_doc.c for more details on the macros below */
 
-    ssSetNumSFcnParams(S, 5);  /* Number of expected parameters */
+	ssSetNumSFcnParams(S, 4);  /* Number of expected parameters */
 #if defined(MATLAB_MEX_FILE)
-    if (ssGetNumSFcnParams(S) == ssGetSFcnParamsCount(S)) {
-        mdlCheckParameters(S);
-        if (ssGetErrorStatus(S) != NULL) {
-            return;
-        }
-    } else {
-        return; /* Parameter mismatch will be reported by Simulink. */
-    }
+	if (ssGetNumSFcnParams(S) == ssGetSFcnParamsCount(S)) {
+		mdlCheckParameters(S);
+		if (ssGetErrorStatus(S) != NULL) {
+			return;
+		}
+	} else {
+		return; /* Parameter mismatch will be reported by Simulink. */
+	}
 #endif
 
-    int_T nRobots = mxGetNumberOfElements(ssGetSFcnParam(S,2));
+	ssSetNumContStates(S, 0);
+	ssSetNumDiscStates(S, 0);
 
-    ssSetNumContStates(S, 0);
-    ssSetNumDiscStates(S, 0);
+	if (!ssSetNumInputPorts(S, 0)) return;
+	//ssSetInputPortWidth(S, 0, 1);
+	//ssSetInputPortRequiredContiguous(S, 0, true); /*direct input signal access*/
+	/*
+	 * Set direct feedthrough flag (1=yes, 0=no).
+	 * A port has direct feedthrough if the input is used in either
+	 * the mdlOutputs or mdlGetTimeOfNextVarHit functions.
+	 * See matlabroot/simulink/src/sfuntmpl_directfeed.txt.
+	 */
+	//ssSetInputPortDirectFeedThrough(S, 0, 1);
 
-    if (!ssSetNumInputPorts(S, 0)) return;
-    //ssSetInputPortWidth(S, 0, 1);
-    //ssSetInputPortRequiredContiguous(S, 0, true); /*direct input signal access*/
-    /*
-     * Set direct feedthrough flag (1=yes, 0=no).
-     * A port has direct feedthrough if the input is used in either
-     * the mdlOutputs or mdlGetTimeOfNextVarHit functions.
-     * See matlabroot/simulink/src/sfuntmpl_directfeed.txt.
-     */
-    //ssSetInputPortDirectFeedThrough(S, 0, 1);
+	if (!ssSetNumOutputPorts(S, 3)) return;
+	mxChar* res = (mxChar*)mxGetData(ssGetSFcnParam(S, 2));
 
-    if (!ssSetNumOutputPorts(S, 3)) return;
-    mxChar* res = (mxChar*)mxGetData(ssGetSFcnParam(S, 4));
+	//TODO: improve
+	std::string encoding;
+	{
+	const size_t encodingLength = mxGetN((ssGetSFcnParam(S, 3)))*sizeof(mxChar)+1;
+	char* tmp = (char*)mxMalloc(encodingLength);
+	mxGetString((ssGetSFcnParam(S, 3)), tmp, encodingLength);
+	encoding = std::string(tmp);
+	mxFree(tmp);
+	}
 
-    ssSetOutputPortMatrixDimensions(S, 0, (uint)res[1], (uint)res[0]); // image
-    ssSetOutputPortDataType(S, 0, SS_UINT8);
-    ssSetOutputPortMatrixDimensions(S, 1, 1, nRobots); // SentTime in s;
-    ssSetOutputPortMatrixDimensions(S, 2, 1, nRobots); // Msg Id
-    ssSetOutputPortDataType(S, 2, SS_UINT32);
+	// Set image output port dimensions and type
+	int_T dims[3];
+	dims[0] = res[1];
+	dims[1] = res[0];
+	dims[2] = sensor_msgs::image_encodings::numChannels(encoding);
 
-    ssSetNumSampleTimes(S, 1);
-    ssSetNumRWork(S, 0);
-    ssSetNumIWork(S, 1); // nRobots
-    ssSetNumPWork(S, nRobots + 1); //nRobots x GenericSub, AsyncSpinner
-    ssSetNumModes(S, 0);
-    ssSetNumNonsampledZCs(S, 0);
+	DimsInfo_T dimsInfo;
+	if (dims[2]>1){
+		dimsInfo.numDims = 3;
+		ssAllowSignalsWithMoreThan2D(S);
+	} else {
+		dimsInfo.numDims = 2;
+	}
+	dimsInfo.dims = dims;
+	dimsInfo.width = dims[0]*dims[1]*dims[2];
+	ssSetOutputPortDimensionInfo(S, 0, &dimsInfo);
 
-    /* Specify the sim state compliance to be same as a built-in block */
-    ssSetSimStateCompliance(S, USE_DEFAULT_SIM_STATE);
+	if (encoding==sensor_msgs::image_encodings::MONO8 ||
+			encoding==sensor_msgs::image_encodings::TYPE_8UC1 ||
+			encoding==sensor_msgs::image_encodings::TYPE_8UC2 ||
+			encoding==sensor_msgs::image_encodings::TYPE_8UC3 ||
+			encoding==sensor_msgs::image_encodings::TYPE_8UC4 ||
+			encoding==sensor_msgs::image_encodings::RGB8 ||
+			encoding==sensor_msgs::image_encodings::RGBA8 ||
+			encoding==sensor_msgs::image_encodings::BGR8 ||
+			encoding==sensor_msgs::image_encodings::BGRA8 ||
+			encoding==sensor_msgs::image_encodings::BAYER_BGGR8 ||
+			encoding==sensor_msgs::image_encodings::BAYER_GBRG8 ||
+			encoding==sensor_msgs::image_encodings::BAYER_GRBG8 ||
+			encoding==sensor_msgs::image_encodings::BAYER_RGGB8 ||
+			encoding==sensor_msgs::image_encodings::YUV422){
+		ssSetOutputPortDataType(S, 0, SS_UINT8);
+	} else if (encoding==sensor_msgs::image_encodings::MONO16 ||
+			encoding==sensor_msgs::image_encodings::TYPE_16UC1 ||
+			encoding==sensor_msgs::image_encodings::TYPE_16UC2 ||
+			encoding==sensor_msgs::image_encodings::TYPE_16UC3 ||
+			encoding==sensor_msgs::image_encodings::TYPE_16UC4 ||
+			encoding==sensor_msgs::image_encodings::RGB16 ||
+			encoding==sensor_msgs::image_encodings::RGBA16 ||
+			encoding==sensor_msgs::image_encodings::BGR16 ||
+			encoding==sensor_msgs::image_encodings::BGRA16 ||
+			encoding==sensor_msgs::image_encodings::BAYER_BGGR16 ||
+			encoding==sensor_msgs::image_encodings::BAYER_GBRG16 ||
+			encoding==sensor_msgs::image_encodings::BAYER_GRBG16 ||
+			encoding==sensor_msgs::image_encodings::BAYER_RGGB16) {
+		ssSetOutputPortDataType(S, 0, SS_UINT16);
+	} else if (encoding==sensor_msgs::image_encodings::TYPE_8SC1 ||
+			encoding==sensor_msgs::image_encodings::TYPE_8SC2 ||
+			encoding==sensor_msgs::image_encodings::TYPE_8SC3 ||
+			encoding==sensor_msgs::image_encodings::TYPE_8SC4) {
+		ssSetOutputPortDataType(S, 0, SS_INT8);
+	} else if (encoding==sensor_msgs::image_encodings::TYPE_16SC1 ||
+			encoding==sensor_msgs::image_encodings::TYPE_16SC2 ||
+			encoding==sensor_msgs::image_encodings::TYPE_16SC3 ||
+			encoding==sensor_msgs::image_encodings::TYPE_16SC4) {
+		ssSetOutputPortDataType(S, 0, SS_INT16);
+	} else if (encoding==sensor_msgs::image_encodings::TYPE_32SC1 ||
+			encoding==sensor_msgs::image_encodings::TYPE_32SC2 ||
+			encoding==sensor_msgs::image_encodings::TYPE_32SC3 ||
+			encoding==sensor_msgs::image_encodings::TYPE_32SC4) {
+		ssSetOutputPortDataType(S, 0, SS_INT32);
+	} else if (encoding==sensor_msgs::image_encodings::TYPE_32FC1 ||
+			encoding==sensor_msgs::image_encodings::TYPE_32FC2 ||
+			encoding==sensor_msgs::image_encodings::TYPE_32FC3 ||
+			encoding==sensor_msgs::image_encodings::TYPE_32FC4) {
+		ssSetOutputPortDataType(S, 0, SS_SINGLE);
+	} else if (encoding==sensor_msgs::image_encodings::TYPE_64FC1 ||
+			encoding==sensor_msgs::image_encodings::TYPE_64FC2 ||
+			encoding==sensor_msgs::image_encodings::TYPE_64FC3 ||
+			encoding==sensor_msgs::image_encodings::TYPE_64FC4) {
+		ssSetOutputPortDataType(S, 0, SS_DOUBLE);
+	} else {
+		ssSetErrorStatus(S, "The specified image encoding string is not supported. This should never happen!");
+		return;
+	}
 
-    ssSetOptions(S, 0);
+	ssSetOutputPortWidth(S, 1, 1); // SentTime in s;
+
+	ssSetOutputPortWidth(S, 2, 1); // Msg Id
+	ssSetOutputPortDataType(S, 2, SS_UINT32);
+
+	ssSetNumSampleTimes(S, 1);
+	ssSetNumRWork(S, 0);
+	ssSetNumIWork(S, 1); // nRobots
+	ssSetNumPWork(S, 2); // GenericSub, AsyncSpinner
+	ssSetNumModes(S, 0);
+	ssSetNumNonsampledZCs(S, 0);
+
+	/* Specify the sim state compliance to be same as a built-in block */
+	ssSetSimStateCompliance(S, USE_DEFAULT_SIM_STATE);
+
+	ssSetOptions(S, 0);
 }
 
 
@@ -233,91 +309,69 @@ static void mdlInitializeSizes(SimStruct *S)
 
 static void mdlInitializeSampleTimes(SimStruct *S)
 {
-    real_T Tsim = mxGetScalar(ssGetSFcnParam(S, 0));
-    ssSetSampleTime(S, 0, Tsim);                      //DISCRETE_SAMPLE_TIME);
-    ssSetOffsetTime(S, 0, 0.0);
-
+	real_T Tsim = mxGetScalar(ssGetSFcnParam(S, 0));
+	ssSetSampleTime(S, 0, Tsim);                      //DISCRETE_SAMPLE_TIME);
+	ssSetOffsetTime(S, 0, 0.0);
 }
 
 
 
 #define MDL_INITIALIZE_CONDITIONS   /* Change to #undef to remove function */
 #if defined(MDL_INITIALIZE_CONDITIONS)
-  /* Function: mdlInitializeConditions ========================================
-   * Abstract:
-   *    In this function, you should initialize the continuous and discrete
-   *    states for your S-function block.  The initial states are placed
-   *    in the state vector, ssGetContStates(S) or ssGetRealDiscStates(S).
-   *    You can also perform any other initialization activities that your
-   *    S-function may require. Note, this routine will be called at the
-   *    start of simulation and if it is present in an enabled subsystem
-   *    configured to reset states, it will be call when the enabled subsystem
-   *    restarts execution to reset the states.
-   */
-  static void mdlInitializeConditions(SimStruct *S)
-  {
-  }
+/* Function: mdlInitializeConditions ========================================
+ * Abstract:
+ *    In this function, you should initialize the continuous and discrete
+ *    states for your S-function block.  The initial states are placed
+ *    in the state vector, ssGetContStates(S) or ssGetRealDiscStates(S).
+ *    You can also perform any other initialization activities that your
+ *    S-function may require. Note, this routine will be called at the
+ *    start of simulation and if it is present in an enabled subsystem
+ *    configured to reset states, it will be call when the enabled subsystem
+ *    restarts execution to reset the states.
+ */
+static void mdlInitializeConditions(SimStruct *S)
+{
+}
 #endif /* MDL_INITIALIZE_CONDITIONS */
 
 
 #define MDL_START  /* Change to #undef to remove function */
 #if defined(MDL_START) 
-  /* Function: mdlStart =======================================================
-   * Abstract:
-   *    This function is called once at start of model execution. If you
-   *    have states that should be initialized once, this is the place
-   *    to do it.
-   */
+/* Function: mdlStart =======================================================
+ * Abstract:
+ *    This function is called once at start of model execution. If you
+ *    have states that should be initialized once, this is the place
+ *    to do it.
+ */
 
 static void mdlStart(SimStruct *S)
 {
-    SFUNPRINTF("Starting Instance of %s.\n", TOSTRING(S_FUNCTION_NAME));
-    // init ROS if not yet done.
-    initROS(S);
+	SFUNPRINTF("Starting Instance of %s.\n", TOSTRING(S_FUNCTION_NAME));
+	// init ROS if not yet done.
+	initROS(S);
 
-    void** vecPWork = ssGetPWork(S);
-    int_T nRobots = mxGetNumberOfElements(ssGetSFcnParam(S,2));
+	void** vecPWork = ssGetPWork(S);
 
-    *ssGetIWork(S) = nRobots;
+	ros::NodeHandle nodeHandle(ros::this_node::getName());
 
-    ros::NodeHandle nodeHandle(ros::this_node::getName());
+	// get Topic String
+	size_t prefix_buflen = mxGetN((ssGetSFcnParam(S, 1)))*sizeof(mxChar)+1;
+	char* prefix_topic = (char*)mxMalloc(prefix_buflen);
+	mxGetString((ssGetSFcnParam(S, 1)), prefix_topic, prefix_buflen);
 
+	GenericSubscriber<sensor_msgs::Image>* sub =
+			new GenericSubscriber<sensor_msgs::Image>(nodeHandle, prefix_topic, 10);
+	vecPWork[0] = sub;
 
-    // get Topic Strings
-    size_t prefix_buflen = mxGetN((ssGetSFcnParam(S, 1)))*sizeof(mxChar)+1;
-    size_t postfix_buflen = mxGetN((ssGetSFcnParam(S, 3)))*sizeof(mxChar)+1;
-    char* prefix_topic = (char*)mxMalloc(prefix_buflen);
-    char* postfix_topic = (char*)mxMalloc(postfix_buflen);
-    mxGetString((ssGetSFcnParam(S, 1)), prefix_topic, prefix_buflen);
-    mxGetString((ssGetSFcnParam(S, 3)), postfix_topic, postfix_buflen);
+	// free char array
+	mxFree(prefix_topic);
 
-    //SFUNPRINTF("The string being passed as a Paramater is - %s\n ", topic);
-    std::stringstream sstream;
-    mxChar* robotIDs = (mxChar*)mxGetData(ssGetSFcnParam(S, 2));
-    for (unsigned int i = 0; i < nRobots; ++i) {
-        sstream.str(std::string());
+	// Create nRobot Spinners
+	ros::AsyncSpinner* spinner = new ros::AsyncSpinner(1); // nRobots Spinner
+	spinner->start();
+	vecPWork[1] = spinner;
 
-        // build topicstring
-        sstream << prefix_topic;
-        sstream << (uint)robotIDs[i];
-        sstream << postfix_topic;
-
-        GenericSubscriber<sensor_msgs::Image>* sub
-                = new GenericSubscriber<sensor_msgs::Image>(nodeHandle, sstream.str(), 10);
-        vecPWork[i] = sub;
-    }
-
-    // free char array
-    mxFree(prefix_topic);
-    mxFree(postfix_topic);
-
-
-    // Create nRobot Spinners
-    ros::AsyncSpinner* spinner = new ros::AsyncSpinner(nRobots); // nRobots Spinner
-    spinner->start();
-    vecPWork[nRobots] = spinner;
-
-  }
+}
 #endif /*  MDL_START */
 
 
@@ -329,39 +383,65 @@ static void mdlStart(SimStruct *S)
  */
 static void mdlOutputs(SimStruct *S, int_T tid)
 {   
-    // get Objects
-    void** vecPWork = ssGetPWork(S);
-    int_T nRobots = *ssGetIWork(S);
+	// get Objects
+	void** vecPWork = ssGetPWork(S);
+	int_T nRobots = *ssGetIWork(S);
 
-    // Preparing Outputs
-    uint8_T* img = (uint8_T*)ssGetOutputPortSignal(S,0);
-    real_T *time = (real_T*)ssGetOutputPortSignal(S,1);
-    uint32_T *id = (uint32_T*)ssGetOutputPortSignal(S,2);
+	// Preparing Outputs
+	//TODO: improve if possible
+	std::string encoding;
+	{
+	const size_t encodingLength = mxGetN((ssGetSFcnParam(S, 3)))*sizeof(mxChar)+1;
+	char* tmp = (char*)mxMalloc(encodingLength);
+	mxGetString((ssGetSFcnParam(S, 3)), tmp, encodingLength);
+	encoding = std::string(tmp);
+	mxFree(tmp);
+	}
 
-    int_T* res = ssGetOutputPortDimensions(S, 0);
+	int_T* res = ssGetOutputPortDimensions(S, 0);
 
-    for (unsigned int i = 0; i < nRobots; ++i) {
-        GenericSubscriber<sensor_msgs::Image>* sub
-                = (GenericSubscriber<sensor_msgs::Image>*)vecPWork[i];
+	GenericSubscriber<sensor_msgs::Image>* sub = (GenericSubscriber<sensor_msgs::Image>*)vecPWork[0];
 
-        sensor_msgs::ImageConstPtr lastMsg = sub->getLastMsg();
-        if (lastMsg){ // copy only if a message was actually received
+	sensor_msgs::ImageConstPtr lastMsg = sub->getLastMsg();
+	if (lastMsg){ // copy only if a message was actually received
 
-            if (lastMsg->width == res[1] && lastMsg->height == res[0] &&
-            		lastMsg->encoding==sensor_msgs::image_encodings::MONO8){
-            	const uint8_T* rosImg = lastMsg->data.data();
-            	for (unsigned int colIdx = 0; colIdx<res[1]; ++colIdx){
-            		for (unsigned int rowIdx = 0; rowIdx<res[0]; ++rowIdx){
-            			img[rowIdx+colIdx*res[0]] = rosImg[rowIdx*lastMsg->step+colIdx];
-            		}
-            	}
+		if (lastMsg->width == res[1] && lastMsg->height == res[0] && lastMsg->encoding == encoding){
 
-            }
-    
-            time[i + 0] = lastMsg->header.stamp.toSec();
-            id[i + 0] = lastMsg->header.seq;
-        }
-    }
+			const int chNum = sensor_msgs::image_encodings::numChannels(encoding);
+			const int colNum = res[1];
+			const int rowNum = res[0];
+			const int chSize = sensor_msgs::image_encodings::bitDepth(encoding)/8;
+			const int pixSize = chSize*chNum;
+
+			uint8_T* port = reinterpret_cast<uint8_T*>(ssGetOutputPortSignal(S,0));
+			const uint8_T* msg = reinterpret_cast<const uint8_T*>(lastMsg->data.data());
+
+//#pragma omp parallel for
+			for (unsigned int colIdx = 0; colIdx<colNum; ++colIdx){
+				for (unsigned int rowIdx = 0; rowIdx<rowNum; ++rowIdx){
+					for (unsigned int chIdx = 0; chIdx<chNum; ++chIdx){
+						memcpy(&port[chSize*(rowIdx + rowNum*(colIdx + colNum*chIdx))],
+								&msg[rowIdx*lastMsg->step + colIdx*pixSize + chIdx*chSize], chSize);
+					}
+				}
+			}
+
+			real_T *time = (real_T*)ssGetOutputPortSignal(S,1);
+			uint32_T *id = (uint32_T*)ssGetOutputPortSignal(S,2);
+			time[0] = lastMsg->header.stamp.toSec();
+			id[0] = lastMsg->header.seq;
+		} else {
+			std::stringstream ss;
+			ss << "Unexpected image resolution or encoding. " <<
+					"Expecting a " << res[1] << "x" << res[0] << " " << encoding << " image, " <<
+					"we received a " << lastMsg->width << "x" << lastMsg->height << " " << lastMsg->encoding << " image.";
+			static std::string msg = ss.str();
+			ssSetErrorStatus(S, msg.c_str());
+			return;
+		}
+
+
+	}
 
 }
 
@@ -369,30 +449,30 @@ static void mdlOutputs(SimStruct *S, int_T tid)
 
 #define MDL_UPDATE  /* Change to #undef to remove function */
 #if defined(MDL_UPDATE)
-  /* Function: mdlUpdate ======================================================
-   * Abstract:
-   *    This function is called once for every major integration time step.
-   *    Discrete states are typically updated here, but this function is useful
-   *    for performing any tasks that should only take place once per
-   *    integration step.
-   */
-  static void mdlUpdate(SimStruct *S, int_T tid)
-  {
-  }
+/* Function: mdlUpdate ======================================================
+ * Abstract:
+ *    This function is called once for every major integration time step.
+ *    Discrete states are typically updated here, but this function is useful
+ *    for performing any tasks that should only take place once per
+ *    integration step.
+ */
+static void mdlUpdate(SimStruct *S, int_T tid)
+{
+}
 #endif /* MDL_UPDATE */
 
 
 
 #define MDL_DERIVATIVES  /* Change to #undef to remove function */
 #if defined(MDL_DERIVATIVES)
-  /* Function: mdlDerivatives =================================================
-   * Abstract:
-   *    In this function, you compute the S-function block's derivatives.
-   *    The derivatives are placed in the derivative vector, ssGetdX(S).
-   */
-  static void mdlDerivatives(SimStruct *S)
-  {
-  }
+/* Function: mdlDerivatives =================================================
+ * Abstract:
+ *    In this function, you compute the S-function block's derivatives.
+ *    The derivatives are placed in the derivative vector, ssGetdX(S).
+ */
+static void mdlDerivatives(SimStruct *S)
+{
+}
 #endif /* MDL_DERIVATIVES */
 
 
@@ -405,21 +485,18 @@ static void mdlOutputs(SimStruct *S, int_T tid)
  */
 static void mdlTerminate(SimStruct *S)
 {
-    // get Objects
-    void** vecPWork = ssGetPWork(S);
-    
-    int_T nRobots = *ssGetIWork(S);
-    for (unsigned int i = 0; i < nRobots; ++i) {
-        GenericSubscriber<sensor_msgs::Image>* sub
-                = (GenericSubscriber<sensor_msgs::Image>*)vecPWork[i];
-        // cleanup
-        delete sub;
-    }
+	// get Objects
+	void** vecPWork = ssGetPWork(S);
 
-    ros::AsyncSpinner* spinner = (ros::AsyncSpinner*)vecPWork[nRobots];
-    delete spinner;
+	GenericSubscriber<sensor_msgs::Image>* sub
+	= (GenericSubscriber<sensor_msgs::Image>*)vecPWork[0];
+	// cleanup
+	delete sub;
 
-    SFUNPRINTF("Terminating Instance of %s.\n", TOSTRING(S_FUNCTION_NAME));
+	ros::AsyncSpinner* spinner = (ros::AsyncSpinner*)vecPWork[1];
+	delete spinner;
+
+	SFUNPRINTF("Terminating Instance of %s.\n", TOSTRING(S_FUNCTION_NAME));
 }
 
 

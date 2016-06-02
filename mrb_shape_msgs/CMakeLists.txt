@@ -37,7 +37,7 @@
 
 
 cmake_minimum_required(VERSION 2.8.3)
-project(mrb_geometry_msgs)
+project(mrb_shape_msgs)
 
 
 #set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
@@ -48,7 +48,7 @@ project(mrb_geometry_msgs)
 find_package(catkin REQUIRED COMPONENTS
   matlab_ros_bridge
   roscpp
-  geometry_msgs
+  shape_msgs
   cmake_module_matlab
 )
 
@@ -131,7 +131,7 @@ add_definitions(-DMATLAB_MEX_FILE)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES matlab_ros_bridge
-   CATKIN_DEPENDS roscpp geometry_msgs matlab_ros_bridge
+   CATKIN_DEPENDS roscpp shape_msgs matlab_ros_bridge
    DEPENDS boost Matlab
 )
 
@@ -147,19 +147,7 @@ include_directories(
 )
 
 set(SOURCES
-  rmsg_pub_PointStamped.cpp
-  rmsg_pub_TransformStamped.cpp
-  rmsg_pub_Vector3Stamped.cpp
-  rmsg_sub_PoseStamped.cpp
-  rmsg_sub_TwistStamped.cpp
-  rmsg_pub_PoseStamped.cpp
-  rmsg_pub_TwistStamped.cpp
-  rmsg_sub_PointStamped.cpp
-  rmsg_sub_TransformStamped.cpp
-  rmsg_sub_Vector3Stamped.cpp
-  rmsg_sub_WrenchStamped.cpp
-  rmsg_pub_WrenchStamped.cpp
-  rmsg_pub_PolygonStamped.cpp
+  rmsg_pub_Mesh.cpp
 )
 
 string(FIND ${CATKIN_DEVEL_PREFIX} ${PROJECT_NAME} FoundPosition REVERSE)
