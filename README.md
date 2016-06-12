@@ -84,7 +84,11 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
 
 ###Compiling ROS
 
-5. Follow the instructions for your ROS distribution on `http://wiki.ros.org/<distro>/Installation/Source` (e.g. for [Indigo](http://wiki.ros.org/indigo/Installation/Source)), to install ROS-Comm in the "wet" version until you need to compile. DON'T COMPILE NOW (it means that you don't have to do a catkin_make or catkin_make_isolated).
+5. Follow the instructions for your ROS distribution on `http://wiki.ros.org/<distro>/Installation/Source` (e.g. for [Indigo](http://wiki.ros.org/indigo/Installation/Source)), to install ROS-Comm in the "wet" version until you need to compile. DON'T COMPILE NOW (it means that you don't have to do a catkin_make or catkin_make_isolated). To reduce the number of ros packages to compile, you can also initialize your workspace with
+
+    ```bash
+    $ rosinstall_generator roscpp geometry_msgs std_msgs sensor_msgs shape_msgs --rosdistro indigo --deps --wet-only --tar > mrb.rosinstall
+    ```
 
 6. In a terminal navigate to the src directory of the catkin workspace created in the previous step and do:
 
@@ -97,7 +101,7 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
 8. Compile ros and the bridge with:
 
     ```bash
-    $ catkin_make --cmake-args -DBOOST_ROOT=path/to/boost/installation/prefix -DBoost_NO_SYSTEM_PATHS=ON -DCMAKE_C_COMPILER=/usr/bin/gcc-4.7 -DCMAKE_CXX_COMPILER=/usr/bin/g++-4.7 -DMATLAB_DIR=/usr/local/MATLAB/R2015b
+    $ src/catkin/bin/catkin_make --cmake-args -DBOOST_ROOT=path/to/boost/installation/prefix -DBoost_NO_SYSTEM_PATHS=ON -DCMAKE_C_COMPILER=/usr/bin/gcc-4.7 -DCMAKE_CXX_COMPILER=/usr/bin/g++-4.7 -DMATLAB_DIR=/usr/local/MATLAB/R2015b
     ```
     note that you might need to change this command according to your <boost_dir>, Matlab path and compiler version.
     Add `install` at the end or run `catkin_make install` if desired.
