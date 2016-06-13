@@ -309,7 +309,6 @@ static void mdlStart(SimStruct *S)
     char * frame_id = (char*)mxMalloc(buflen);
     mxGetString((ssGetSFcnParam(S, 4)), frame_id, buflen);
     vecPWork[nRobots] = new std::string(frame_id); //last element of vecPWork is frame_id
-    SFUNPRINTF("%s: frame_id: ___%s__.\n", TOSTRING(S_FUNCTION_NAME), frame_id);
 
     // free char array
     mxFree(frame_id);
@@ -331,7 +330,6 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     void** vecPWork = ssGetPWork(S);
     int_T nRobots = *ssGetIWork(S);
     const std::string * frame_id = (const std::string *) vecPWork[nRobots];
-    SFUNPRINTF("%s: frame_id: %s.\n", TOSTRING(S_FUNCTION_NAME), frame_id->c_str());
 
     // get Pointers
     // accessing inputs
