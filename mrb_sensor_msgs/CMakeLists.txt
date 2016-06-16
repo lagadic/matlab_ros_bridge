@@ -153,6 +153,7 @@ set(SOURCES
   rmsg_sub_Image.cpp
   rmsg_sub_JointState.cpp
   rmsg_sub_Joy.cpp
+  rmsg_pub_PointCloud2_XYZ.cpp
 )
 
 string(FIND ${CATKIN_DEVEL_PREFIX} ${PROJECT_NAME} FoundPosition REVERSE)
