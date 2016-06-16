@@ -293,14 +293,7 @@ mdlStart(SimStruct *S)
   //Width and Height
   ssGetIWork(S)[0] = (int)mxGetScalar(ssGetSFcnParam(S, 3));
   ssGetIWork(S)[1] = (int)mxGetScalar(ssGetSFcnParam(S, 4));
-/*
-  SFUNPRINTF("stored in mdlStart: w%d h%d\n",
-    (int)mxGetScalar(ssGetSFcnParam(S, 3)), 
-    (int)mxGetScalar(ssGetSFcnParam(S, 4)));
-  SFUNPRINTF("GetIWorkstored in mdlStart: w%d h%d\n",
-    ssGetIWork(S)[0], 
-    ssGetIWork(S)[1]);
-*/
+
   ros::NodeHandle nodeHandle(ros::this_node::getName());
 
   // get Topic Strings
@@ -337,12 +330,7 @@ static void mdlOutputs(SimStruct *S, int_T tid)
 
   const int width = ssGetIWork(S)[0];
   const int height = ssGetIWork(S)[1];
-/*
-  SFUNPRINTF("GetIWorkstored in mdlOutput: w%d h%d\n",
-    ssGetIWork(S)[0], 
-    ssGetIWork(S)[1]);
-  SFUNPRINTF("obtained in mdlOutputs: w%d h%d\n", width, height);
-*/
+
   const std::string * frame_id = (const std::string *) vecPWork[0];
   GenericPublisher<sensor_msgs::PointCloud2>* pub
     = (GenericPublisher<sensor_msgs::PointCloud2>*)vecPWork[1];
@@ -383,15 +371,13 @@ static void mdlOutputs(SimStruct *S, int_T tid)
    
   msg.data.resize(height*width*msg.point_step);
 
-  float temp;
+  float temp[3];
   for(int i=0; i<height*width; ++i)
   {
-    temp = points[4*i+0];    
-    memcpy(&msg.data[i * msg.point_step + msg.fields[0].offset], &temp, sizeof(float));
-    temp = points[4*i+1];    
-    memcpy(&msg.data[i * msg.point_step + msg.fields[1].offset], &temp, sizeof(float));
-    temp = points[4*i+2];    
-    memcpy(&msg.data[i * msg.point_step + msg.fields[2].offset], &temp, sizeof(float));
+    temp[0] = points[4*i+0];
+    temp[1] = points[4*i+1];
+    temp[2] = points[4*i+2];
+    memcpy(&msg.data[i * msg.point_step + msg.fields[0].offset], &temp, sizeof(float)*3);
   }
 
   pub->publish(msg);
