@@ -201,6 +201,7 @@ static void mdlInitializeSizes(SimStruct *S)
     return;
 
   ssSetInputPortMatrixDimensions(S, 0, 1, 4*height*width); // points
+  ssSetInputPortDataType(S, 0, SS_SINGLE);
 
 
   for (int_T i = 0; i < ssGetNumInputPorts(S); ++i)
@@ -337,7 +338,7 @@ static void mdlOutputs(SimStruct *S, int_T tid)
 
   // get Pointers
   // accessing inputs
-  const real_T * points = (const real_T *) ssGetInputPortSignal(S,0);
+  const float * points = (const float *) ssGetInputPortSignal(S,0);
   
   sensor_msgs::PointCloud2 msg;
   msg.header.stamp = ros::Time::now();
@@ -371,6 +372,7 @@ static void mdlOutputs(SimStruct *S, int_T tid)
    
   msg.data.resize(height*width*msg.point_step);
 
+/*
   float temp[3];
   for(int i=0; i<height*width; ++i)
   {
@@ -379,7 +381,8 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     temp[2] = points[4*i+2];
     memcpy(&msg.data[i * msg.point_step + msg.fields[0].offset], &temp, sizeof(float)*3);
   }
-
+*/
+  memcpy(&msg.data[0], points, height*width*msg.point_step);
   pub->publish(msg);
 }
 
