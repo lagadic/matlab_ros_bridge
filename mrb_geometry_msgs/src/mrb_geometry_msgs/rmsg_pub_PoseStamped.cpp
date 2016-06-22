@@ -114,6 +114,18 @@
 		ssSetErrorStatus(S,"Postfix value must be char array (string)");
 		return;
 	}
+
+	// Topic
+	if (!mxIsChar(ssGetSFcnParam(S, 1))) {
+		ssSetErrorStatus(S, "Topic value must be char array (string)");
+		return;
+	}
+
+	// Frame ID
+	if (!mxIsChar(ssGetSFcnParam(S, 4))) {
+		ssSetErrorStatus(S, "Frame ID value must be char array (string)");
+		return;
+	}
   }
 #endif /* MDL_CHECK_PARAMETERS */
 
@@ -159,7 +171,7 @@ static void mdlInitializeSizes(SimStruct *S)
 {
     /* See sfuntmpl_doc.c for more details on the macros below */
 
-    ssSetNumSFcnParams(S, 4);  /* Number of expected parameters */
+    ssSetNumSFcnParams(S, 5);  /* Number of expected parameters */
 #if defined(MATLAB_MEX_FILE)
     if (ssGetNumSFcnParams(S) == ssGetSFcnParamsCount(S)) {
         mdlCheckParameters(S);
@@ -198,7 +210,7 @@ static void mdlInitializeSizes(SimStruct *S)
     ssSetNumSampleTimes(S, 1);
     ssSetNumRWork(S, 0);
     ssSetNumIWork(S, 1); // nRobots
-    ssSetNumPWork(S, nRobots); // nRobots x GenericPub
+    ssSetNumPWork(S, nRobots + 1); // nRobots x GenericPub + Frame_id
     ssSetNumModes(S, 0);
     ssSetNumNonsampledZCs(S, 0);
 
@@ -284,14 +296,22 @@ static void mdlStart(SimStruct *S)
         // build topicstring
         sstream << prefix_topic;
         sstream << (uint)robotIDs[i];
-    	sstream << postfix_topic;
+      	sstream << postfix_topic;
 
         GenericPublisher<geometry_msgs::PoseStamped>* pub
 			= new GenericPublisher<geometry_msgs::PoseStamped>(nodeHandle, sstream.str(), 10);
         vecPWork[i] = pub;
+
 	}
 
+    // get Frame_id String
+    char buflen = mxGetN((ssGetSFcnParam(S, 4))) * sizeof(mxChar) + 1;
+    char * frame_id = (char*)mxMalloc(buflen);
+    mxGetString((ssGetSFcnParam(S, 4)), frame_id, buflen);
+    vecPWork[nRobots] = new std::string(frame_id); //last element of vecPWork is frame_id
+
     // free char array
+    mxFree(frame_id);
     mxFree(prefix_topic);
     mxFree(postfix_topic);
   }
@@ -309,6 +329,7 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     // get Objects
     void** vecPWork = ssGetPWork(S);
     int_T nRobots = *ssGetIWork(S);
+    const std::string * frame_id = (const std::string *) vecPWork[nRobots];
 
     // get Pointers
     // accessing inputs
@@ -316,12 +337,14 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     const real_T *orientation = (const real_T*) ssGetInputPortSignal(S,1);
     
     geometry_msgs::PoseStamped msg;
+    
+    // define send Time.
+    msg.header.stamp = ros::Time::now();
+    msg.header.frame_id = *frame_id;
+
     for (unsigned int i = 0; i < nRobots; ++i) {
         GenericPublisher<geometry_msgs::PoseStamped>* pub 
                 = (GenericPublisher<geometry_msgs::PoseStamped>*)vecPWork[i];
-
-        // define send Time.
-        msg.header.stamp = ros::Time::now();
 
         msg.pose.position.x = position[i*3 + 0];
         msg.pose.position.y = position[i*3 + 1];

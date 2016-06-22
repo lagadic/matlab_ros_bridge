@@ -189,7 +189,11 @@ static void mdlStart(SimStruct *S)
 {  
     // Notify
     SFUNPRINTF("Starting Instance of %s.\n", TOSTRING(S_FUNCTION_NAME));
-    
+    // init ROS if not yet done.
+    initROS(S);
+
+    ros::NodeHandle nodeHandle(ros::this_node::getName());
+
     void** vecPWork = ssGetPWork(S);
     ros::Time::init();
     ros::Time* firstExecTime = new ros::Time(ros::Time::now());
