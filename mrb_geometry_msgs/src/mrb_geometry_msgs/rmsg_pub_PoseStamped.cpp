@@ -71,17 +71,17 @@
 
 #define MDL_CHECK_PARAMETERS
 #if defined(MDL_CHECK_PARAMETERS) && defined(MATLAB_MEX_FILE)
-  /* Function: mdlCheckParameters =============================================
-   * Abstract:
-   *    Validate our parameters to verify:
-   *     o The numerator must be of a lower order than the denominator.
-   *     o The sample time must be a real positive nonzero value.
-   */
-  static void mdlCheckParameters(SimStruct *S)
-  {
+/* Function: mdlCheckParameters =============================================
+ * Abstract:
+ *    Validate our parameters to verify:
+ *     o The numerator must be of a lower order than the denominator.
+ *     o The sample time must be a real positive nonzero value.
+ */
+static void mdlCheckParameters(SimStruct *S)
+{
 	//  SFUNPRINTF("Calling mdlCheckParameters");
-    
-    // Tsim
+
+	// Tsim
 	if (mxIsEmpty( ssGetSFcnParam(S,0)) ||
 			mxIsSparse( ssGetSFcnParam(S,0)) ||
 			mxIsComplex( ssGetSFcnParam(S,0)) ||
@@ -99,25 +99,19 @@
 		return;
 	}
 
-    // Robot Array
-    if (mxIsEmpty( ssGetSFcnParam(S,2)) ||
-            mxIsSparse( ssGetSFcnParam(S,2)) ||
-            mxIsComplex( ssGetSFcnParam(S,2)) ||
-            mxIsLogical( ssGetSFcnParam(S,2)) ||
-            !mxIsChar( ssGetSFcnParam(S,2)) ) {
-        ssSetErrorStatus(S,"Robot Vector must be a char vector of robot ids");
-        return;
-    }
-    
-    // Postfix Topic
-	if (!mxIsChar( ssGetSFcnParam(S,3)) ) {
-		ssSetErrorStatus(S,"Postfix value must be char array (string)");
+	// Robot Array
+	if (mxIsEmpty( ssGetSFcnParam(S,2)) ||
+			mxIsSparse( ssGetSFcnParam(S,2)) ||
+			mxIsComplex( ssGetSFcnParam(S,2)) ||
+			mxIsLogical( ssGetSFcnParam(S,2)) ||
+			!mxIsChar( ssGetSFcnParam(S,2)) ) {
+		ssSetErrorStatus(S,"Robot Vector must be a char vector of robot ids");
 		return;
 	}
 
-	// Topic
-	if (!mxIsChar(ssGetSFcnParam(S, 1))) {
-		ssSetErrorStatus(S, "Topic value must be char array (string)");
+	// Postfix Topic
+	if (!mxIsChar( ssGetSFcnParam(S,3)) ) {
+		ssSetErrorStatus(S,"Postfix value must be char array (string)");
 		return;
 	}
 
@@ -126,7 +120,7 @@
 		ssSetErrorStatus(S, "Frame ID value must be char array (string)");
 		return;
 	}
-  }
+}
 #endif /* MDL_CHECK_PARAMETERS */
 
 
@@ -169,33 +163,33 @@
  */
 static void mdlInitializeSizes(SimStruct *S)
 {
-    /* See sfuntmpl_doc.c for more details on the macros below */
+	/* See sfuntmpl_doc.c for more details on the macros below */
 
-    ssSetNumSFcnParams(S, 5);  /* Number of expected parameters */
+	ssSetNumSFcnParams(S, 5);  /* Number of expected parameters */
 #if defined(MATLAB_MEX_FILE)
-    if (ssGetNumSFcnParams(S) == ssGetSFcnParamsCount(S)) {
-        mdlCheckParameters(S);
-        if (ssGetErrorStatus(S) != NULL) {
-            return;
-        }
-    } else {
-        return; /* Parameter mismatch will be reported by Simulink. */
-    }
+	if (ssGetNumSFcnParams(S) == ssGetSFcnParamsCount(S)) {
+		mdlCheckParameters(S);
+		if (ssGetErrorStatus(S) != NULL) {
+			return;
+		}
+	} else {
+		return; /* Parameter mismatch will be reported by Simulink. */
+	}
 #endif
 
-    int_T nRobots = mxGetNumberOfElements(ssGetSFcnParam(S,2));
+	int_T nRobots = mxGetNumberOfElements(ssGetSFcnParam(S,2));
 
-    ssSetNumContStates(S, 0);
-    ssSetNumDiscStates(S, 0);
+	ssSetNumContStates(S, 0);
+	ssSetNumDiscStates(S, 0);
 
-    if (!ssSetNumInputPorts(S, 2)) return;
-    ssSetInputPortMatrixDimensions(S, 0, 3, nRobots); // position
-    ssSetInputPortMatrixDimensions(S, 1, 4, nRobots); // orientation
+	if (!ssSetNumInputPorts(S, 2)) return;
+	ssSetInputPortMatrixDimensions(S, 0, 3, nRobots); // position
+	ssSetInputPortMatrixDimensions(S, 1, 4, nRobots); // orientation
 
 	for (int_T i = 0; i < ssGetNumInputPorts(S); ++i) {
 		/*direct input signal access*/
-    	ssSetInputPortRequiredContiguous(S, i, true); 
-		
+		ssSetInputPortRequiredContiguous(S, i, true);
+
 		/*
 		 * Set direct feedthrough flag (1=yes, 0=no).
 		 * A port has direct feedthrough if the input is used in either
@@ -205,19 +199,19 @@ static void mdlInitializeSizes(SimStruct *S)
 		ssSetInputPortDirectFeedThrough(S, i, 1);
 	}
 
-    if (!ssSetNumOutputPorts(S, 0)) return;
+	if (!ssSetNumOutputPorts(S, 0)) return;
 
-    ssSetNumSampleTimes(S, 1);
-    ssSetNumRWork(S, 0);
-    ssSetNumIWork(S, 1); // nRobots
-    ssSetNumPWork(S, nRobots + 1); // nRobots x GenericPub + Frame_id
-    ssSetNumModes(S, 0);
-    ssSetNumNonsampledZCs(S, 0);
+	ssSetNumSampleTimes(S, 1);
+	ssSetNumRWork(S, 0);
+	ssSetNumIWork(S, 1); // nRobots
+	ssSetNumPWork(S, nRobots + 1); // nRobots x GenericPub + Frame_id
+	ssSetNumModes(S, 0);
+	ssSetNumNonsampledZCs(S, 0);
 
-    /* Specify the sim state compliance to be same as a built-in block */
-    ssSetSimStateCompliance(S, USE_DEFAULT_SIM_STATE);
+	/* Specify the sim state compliance to be same as a built-in block */
+	ssSetSimStateCompliance(S, USE_DEFAULT_SIM_STATE);
 
-    ssSetOptions(S, 0);
+	ssSetOptions(S, 0);
 }
 
 
@@ -231,9 +225,9 @@ static void mdlInitializeSizes(SimStruct *S)
 
 static void mdlInitializeSampleTimes(SimStruct *S)
 {
-    real_T Tsim = mxGetScalar(ssGetSFcnParam(S, 0));
-    ssSetSampleTime(S, 0, Tsim);                      //DISCRETE_SAMPLE_TIME);
-    ssSetOffsetTime(S, 0, 0.0);
+	real_T Tsim = mxGetScalar(ssGetSFcnParam(S, 0));
+	ssSetSampleTime(S, 0, Tsim);                      //DISCRETE_SAMPLE_TIME);
+	ssSetOffsetTime(S, 0, 0.0);
 
 }
 
@@ -241,80 +235,80 @@ static void mdlInitializeSampleTimes(SimStruct *S)
 
 #define MDL_INITIALIZE_CONDITIONS   /* Change to #undef to remove function */
 #if defined(MDL_INITIALIZE_CONDITIONS)
-  /* Function: mdlInitializeConditions ========================================
-   * Abstract:
-   *    In this function, you should initialize the continuous and discrete
-   *    states for your S-function block.  The initial states are placed
-   *    in the state vector, ssGetContStates(S) or ssGetRealDiscStates(S).
-   *    You can also perform any other initialization activities that your
-   *    S-function may require. Note, this routine will be called at the
-   *    start of simulation and if it is present in an enabled subsystem
-   *    configured to reset states, it will be call when the enabled subsystem
-   *    restarts execution to reset the states.
-   */
-  static void mdlInitializeConditions(SimStruct *S)
-  {
-  }
+/* Function: mdlInitializeConditions ========================================
+ * Abstract:
+ *    In this function, you should initialize the continuous and discrete
+ *    states for your S-function block.  The initial states are placed
+ *    in the state vector, ssGetContStates(S) or ssGetRealDiscStates(S).
+ *    You can also perform any other initialization activities that your
+ *    S-function may require. Note, this routine will be called at the
+ *    start of simulation and if it is present in an enabled subsystem
+ *    configured to reset states, it will be call when the enabled subsystem
+ *    restarts execution to reset the states.
+ */
+static void mdlInitializeConditions(SimStruct *S)
+{
+}
 #endif /* MDL_INITIALIZE_CONDITIONS */
 
 #define MDL_START  /* Change to #undef to remove function */
 #if defined(MDL_START) 
-  /* Function: mdlStart =======================================================
-   * Abstract:
-   *    This function is called once at start of model execution. If you
-   *    have states that should be initialized once, this is the place
-   *    to do it.
-   */
+/* Function: mdlStart =======================================================
+ * Abstract:
+ *    This function is called once at start of model execution. If you
+ *    have states that should be initialized once, this is the place
+ *    to do it.
+ */
 
 static void mdlStart(SimStruct *S)
 {   
-    SFUNPRINTF("Starting Instance of %s.\n", TOSTRING(S_FUNCTION_NAME));
-    // init ROS if not yet done.
-    initROS(S);
+	SFUNPRINTF("Starting Instance of %s.\n", TOSTRING(S_FUNCTION_NAME));
+	// init ROS if not yet done.
+	initROS(S);
 
-    void** vecPWork = ssGetPWork(S);
-    // save nRobots in IWorkVector
-    int_T nRobots = mxGetNumberOfElements(ssGetSFcnParam(S,2));
-    *ssGetIWork(S) = nRobots;
+	void** vecPWork = ssGetPWork(S);
+	// save nRobots in IWorkVector
+	int_T nRobots = mxGetNumberOfElements(ssGetSFcnParam(S,2));
+	*ssGetIWork(S) = nRobots;
 
-    ros::NodeHandle nodeHandle(ros::this_node::getName());
+	ros::NodeHandle nodeHandle(ros::this_node::getName());
 
-    // get Topic Strings
-    size_t prefix_buflen = mxGetN((ssGetSFcnParam(S, 1)))*sizeof(mxChar)+1;
-    size_t postfix_buflen = mxGetN((ssGetSFcnParam(S, 3)))*sizeof(mxChar)+1;
-    char* prefix_topic = (char*)mxMalloc(prefix_buflen);
-    char* postfix_topic = (char*)mxMalloc(postfix_buflen);
-    mxGetString((ssGetSFcnParam(S, 1)), prefix_topic, prefix_buflen);
-    mxGetString((ssGetSFcnParam(S, 3)), postfix_topic, postfix_buflen);
+	// get Topic Strings
+	size_t prefix_buflen = mxGetN((ssGetSFcnParam(S, 1)))*sizeof(mxChar)+1;
+	size_t postfix_buflen = mxGetN((ssGetSFcnParam(S, 3)))*sizeof(mxChar)+1;
+	char* prefix_topic = (char*)mxMalloc(prefix_buflen);
+	char* postfix_topic = (char*)mxMalloc(postfix_buflen);
+	mxGetString((ssGetSFcnParam(S, 1)), prefix_topic, prefix_buflen);
+	mxGetString((ssGetSFcnParam(S, 3)), postfix_topic, postfix_buflen);
 
-    //SFUNPRINTF("The string being passed as a Paramater is - %s\n ", topic);
-    std::stringstream sstream;
-    mxChar* robotIDs = (mxChar*)mxGetData(ssGetSFcnParam(S, 2));
-    for (unsigned int i = 0; i < nRobots; ++i) {
-        sstream.str(std::string());
+	//SFUNPRINTF("The string being passed as a Paramater is - %s\n ", topic);
+	std::stringstream sstream;
+	mxChar* robotIDs = (mxChar*)mxGetData(ssGetSFcnParam(S, 2));
+	for (unsigned int i = 0; i < nRobots; ++i) {
+		sstream.str(std::string());
 
-        // build topicstring
-        sstream << prefix_topic;
-        sstream << (uint)robotIDs[i];
-      	sstream << postfix_topic;
+		// build topicstring
+		sstream << prefix_topic;
+		sstream << (uint)robotIDs[i];
+		sstream << postfix_topic;
 
-        GenericPublisher<geometry_msgs::PoseStamped>* pub
-			= new GenericPublisher<geometry_msgs::PoseStamped>(nodeHandle, sstream.str(), 10);
-        vecPWork[i] = pub;
+		GenericPublisher<geometry_msgs::PoseStamped>* pub
+		= new GenericPublisher<geometry_msgs::PoseStamped>(nodeHandle, sstream.str(), 10);
+		vecPWork[i] = pub;
 
 	}
 
-    // get Frame_id String
-    char buflen = mxGetN((ssGetSFcnParam(S, 4))) * sizeof(mxChar) + 1;
-    char * frame_id = (char*)mxMalloc(buflen);
-    mxGetString((ssGetSFcnParam(S, 4)), frame_id, buflen);
-    vecPWork[nRobots] = new std::string(frame_id); //last element of vecPWork is frame_id
+	// get Frame_id String
+	char buflen = mxGetN((ssGetSFcnParam(S, 4))) * sizeof(mxChar) + 1;
+	char * frame_id = (char*)mxMalloc(buflen);
+	mxGetString((ssGetSFcnParam(S, 4)), frame_id, buflen);
+	vecPWork[nRobots] = new std::string(frame_id); //last element of vecPWork is frame_id
 
-    // free char array
-    mxFree(frame_id);
-    mxFree(prefix_topic);
-    mxFree(postfix_topic);
-  }
+	// free char array
+	mxFree(frame_id);
+	mxFree(prefix_topic);
+	mxFree(postfix_topic);
+}
 #endif /*  MDL_START */
 
 
@@ -326,37 +320,37 @@ static void mdlStart(SimStruct *S)
  */
 static void mdlOutputs(SimStruct *S, int_T tid)
 {   
-    // get Objects
-    void** vecPWork = ssGetPWork(S);
-    int_T nRobots = *ssGetIWork(S);
-    const std::string * frame_id = (const std::string *) vecPWork[nRobots];
+	// get Objects
+	void** vecPWork = ssGetPWork(S);
+	int_T nRobots = *ssGetIWork(S);
+	const std::string * frame_id = (const std::string *) vecPWork[nRobots];
 
-    // get Pointers
-    // accessing inputs
-    const real_T *position = (const real_T*) ssGetInputPortSignal(S,0);
-    const real_T *orientation = (const real_T*) ssGetInputPortSignal(S,1);
-    
-    geometry_msgs::PoseStamped msg;
-    
-    // define send Time.
-    msg.header.stamp = ros::Time::now();
-    msg.header.frame_id = *frame_id;
+	// get Pointers
+	// accessing inputs
+	const real_T *position = (const real_T*) ssGetInputPortSignal(S,0);
+	const real_T *orientation = (const real_T*) ssGetInputPortSignal(S,1);
 
-    for (unsigned int i = 0; i < nRobots; ++i) {
-        GenericPublisher<geometry_msgs::PoseStamped>* pub 
-                = (GenericPublisher<geometry_msgs::PoseStamped>*)vecPWork[i];
+	geometry_msgs::PoseStamped msg;
 
-        msg.pose.position.x = position[i*3 + 0];
-        msg.pose.position.y = position[i*3 + 1];
-        msg.pose.position.z = position[i*3 + 2];
+	// define send Time.
+	msg.header.stamp = ros::Time::now();
+	msg.header.frame_id = *frame_id;
 
-        // w, x, y, z
-        msg.pose.orientation.w = orientation[i*4 + 0];
-        msg.pose.orientation.x = orientation[i*4 + 1];
-        msg.pose.orientation.y = orientation[i*4 + 2];
-        msg.pose.orientation.z = orientation[i*4 + 3];
+	for (unsigned int i = 0; i < nRobots; ++i) {
+		GenericPublisher<geometry_msgs::PoseStamped>* pub
+		= (GenericPublisher<geometry_msgs::PoseStamped>*)vecPWork[i];
 
-        pub->publish(msg);
+		msg.pose.position.x = position[i*3 + 0];
+		msg.pose.position.y = position[i*3 + 1];
+		msg.pose.position.z = position[i*3 + 2];
+
+		// w, x, y, z
+		msg.pose.orientation.w = orientation[i*4 + 0];
+		msg.pose.orientation.x = orientation[i*4 + 1];
+		msg.pose.orientation.y = orientation[i*4 + 2];
+		msg.pose.orientation.z = orientation[i*4 + 3];
+
+		pub->publish(msg);
 	}
 
 }
@@ -365,30 +359,30 @@ static void mdlOutputs(SimStruct *S, int_T tid)
 
 #define MDL_UPDATE  /* Change to #undef to remove function */
 #if defined(MDL_UPDATE)
-  /* Function: mdlUpdate ======================================================
-   * Abstract:
-   *    This function is called once for every major integration time step.
-   *    Discrete states are typically updated here, but this function is useful
-   *    for performing any tasks that should only take place once per
-   *    integration step.
-   */
-  static void mdlUpdate(SimStruct *S, int_T tid)
-  {
-  }
+/* Function: mdlUpdate ======================================================
+ * Abstract:
+ *    This function is called once for every major integration time step.
+ *    Discrete states are typically updated here, but this function is useful
+ *    for performing any tasks that should only take place once per
+ *    integration step.
+ */
+static void mdlUpdate(SimStruct *S, int_T tid)
+{
+}
 #endif /* MDL_UPDATE */
 
 
 
 #define MDL_DERIVATIVES  /* Change to #undef to remove function */
 #if defined(MDL_DERIVATIVES)
-  /* Function: mdlDerivatives =================================================
-   * Abstract:
-   *    In this function, you compute the S-function block's derivatives.
-   *    The derivatives are placed in the derivative vector, ssGetdX(S).
-   */
-  static void mdlDerivatives(SimStruct *S)
-  {
-  }
+/* Function: mdlDerivatives =================================================
+ * Abstract:
+ *    In this function, you compute the S-function block's derivatives.
+ *    The derivatives are placed in the derivative vector, ssGetdX(S).
+ */
+static void mdlDerivatives(SimStruct *S)
+{
+}
 #endif /* MDL_DERIVATIVES */
 
 
@@ -401,18 +395,18 @@ static void mdlOutputs(SimStruct *S, int_T tid)
  */
 static void mdlTerminate(SimStruct *S)
 {
-    // get Objects
-    void** vecPWork = ssGetPWork(S);
+	// get Objects
+	void** vecPWork = ssGetPWork(S);
 
-    int_T nRobots = *ssGetIWork(S);
-    for (unsigned int i = 0; i < nRobots; ++i) {
-        GenericPublisher<geometry_msgs::PoseStamped>* pub = (GenericPublisher<geometry_msgs::PoseStamped>*)vecPWork[i];
-        // cleanup
-        delete pub;
+	int_T nRobots = *ssGetIWork(S);
+	for (unsigned int i = 0; i < nRobots; ++i) {
+		GenericPublisher<geometry_msgs::PoseStamped>* pub = (GenericPublisher<geometry_msgs::PoseStamped>*)vecPWork[i];
+		// cleanup
+		delete pub;
 	}
 
 
-    SFUNPRINTF("Terminating Instance of %s.\n", TOSTRING(S_FUNCTION_NAME));
+	SFUNPRINTF("Terminating Instance of %s.\n", TOSTRING(S_FUNCTION_NAME));
 }
 
 
