@@ -39,32 +39,45 @@
 #ifndef __ROSMATLABBRIDGEDEFINESHPP__
 #define __ROSMATLABBRIDGEDEFINESHPP__
 
-#ifndef MATLAB_MEX_FILE
-#define SFUNPRINTF printf
-#else
-//#define SFUNPRINTF mexPrintf
-#include <cstdio>
-#define COMBINE1(X,Y) X##Y  // helper macro
-#define COMBINE(X,Y) COMBINE1(X,Y)
-#define SFUNPRINTF(...) \
-    char COMBINE(str,__LINE__)[1000]; std::sprintf(COMBINE(str,__LINE__), __VA_ARGS__); std::cout << COMBINE(str,__LINE__);
-#endif
+#include "simstruc.h"
+
+#define SFUNPRINTF(format, ...) \
+	ssPrintf("[%s:%s:%d] " format, TOSTRING(S_FUNCTION_NAME), __func__ , __LINE__, ##__VA_ARGS__);
+
+
+void ssMessage(const SimStruct *S, const char* format, ...){
+    const int lenFmt = snprintf(NULL, 0, "block '%s': %s", ssGetPath(S), format);
+    char *fmt = new char[lenFmt+1];
+    snprintf(fmt, lenFmt+1, "block '%s': %s", ssGetPath(S), format);
+
+    va_list argptr;
+    va_start(argptr, format);
+    const int len = vsnprintf(NULL, 0, fmt, argptr);
+    char *msg = new char[len+1];
+    vsnprintf(msg, len+1, fmt, argptr);
+    ssPrintf("%s", msg);
+
+    va_end(argptr);
+    delete(fmt);
+    delete(msg);
+}
+
 
 // Custom ROS INIT
-static void initROS(SimStruct *S)
+static void initROS(const SimStruct *S)
 {
     // Don't to anything before here.
     if (!ros::isInitialized()) {
 
         int argc = 0;
         char* argv[0];
-        SFUNPRINTF("Initializing ROS!\n");
+        ssMessage(S, "Initializing ROS!\n");
 
         ros::init(argc, argv, "matlab", ros::init_options::NoSigintHandler
                         | ros::init_options::AnonymousName
                         | ros::init_options::NoRosout);
 
-        SFUNPRINTF("Done Initializing ROS!\n");
+        ssMessage(S, "Done Initializing ROS!\n");
 
     } else {
         //SFUNPRINTF("ROS already initialized!\n");
