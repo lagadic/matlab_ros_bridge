@@ -123,8 +123,9 @@ static void mdlInitializeSizes(SimStruct *S)
      */
     //ssSetInputPortDirectFeedThrough(S, 0, 1);
 
-    if (!ssSetNumOutputPorts(S, 1)) return;
+    if (!ssSetNumOutputPorts(S, 2)) return;
     ssSetOutputPortWidth(S, 0, 1); // port 0 is 1 value (rtTimeDelay)
+    ssSetOutputPortWidth(S, 1, 1); // port 1 is 1 value (currentRosTime)
 
 
     ssSetNumSampleTimes(S, 1);
@@ -191,11 +192,10 @@ static void mdlStart(SimStruct *S)
     SFUNPRINTF("Starting Instance of %s.\n", TOSTRING(S_FUNCTION_NAME));
     // init ROS if not yet done.
     initROS(S);
-
-    ros::NodeHandle nodeHandle(ros::this_node::getName());
+//    ros::NodeHandle nodeHandle(ros::this_node::getName());
+    ros::Time::init();
 
     void** vecPWork = ssGetPWork(S);
-    ros::Time::init();
     ros::Time* firstExecTime = new ros::Time(ros::Time::now());
     vecPWork[0] = firstExecTime;
 
@@ -234,15 +234,17 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     vecRWork[1] += slowDownFactor * vecRWork[0];
     
     ros::Time currentTime = ros::Time::now();
+    if (*firstExecTime > currentTime){
+    	ssWarning(S, "Resetting all timers due to negative elapsed time! \
+    			This should not happen in normal running conditions unless \
+    			the simulation has just started or /use_sim_time has been changed.");
+    	*firstExecTime = currentTime;
+    	vecRWork[1] = 0.0;
+    }
     ros::Time timeElapsed((currentTime - *firstExecTime).toSec());
     *lastExecTime = currentTime;
 
     ros::Duration sleepTime = ros::Time(vecRWork[1]) - timeElapsed;
-
-    // output of sleepTime
-    real_T *output = (real_T*)ssGetOutputPortSignal(S,0);
-    output[0] = sleepTime.toSec();
-
 
     if (sleepTime.toSec() > 0.0) {
         sleepTime.sleep();
@@ -259,6 +261,12 @@ static void mdlOutputs(SimStruct *S, int_T tid)
             	}
 	    }
     }
+
+    // output of sleepTime
+    real_T *output = (real_T*)ssGetOutputPortSignal(S,0);
+    output[0] = sleepTime.toSec();
+    // output of current ros time
+    output[1] = ros::Time::now().toSec();
 }
 
 
