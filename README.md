@@ -112,7 +112,6 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
 
     ```bash
     $ source /path/to/your/catkin_ws/devel_isolated/setup.bash
-    $ cmake .
     ````
     
     Navigate to the build directory of the package `matlab_ros_bridge`. It should be  `catkin_ws/build/` or `catkin_ws/build_isolated/matlab_ros_bridge` if you used `catkin_make_isolated`. Now generate the simulink block library by running:
