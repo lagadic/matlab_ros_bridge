@@ -88,6 +88,7 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
 
     ```bash
     $ rosinstall_generator roscpp geometry_msgs std_msgs sensor_msgs shape_msgs --rosdistro indigo --deps --wet-only --tar > mrb.rosinstall
+    $ wstool init -j8 src mrb.rosinstall
     ```
 
 6. In a terminal navigate to the src directory of the catkin workspace created in the previous step and do:
