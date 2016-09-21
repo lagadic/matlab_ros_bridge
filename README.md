@@ -163,12 +163,12 @@ Matlab version  | gcc supported version | shipped boost vesion | compiled boost 
 2014a  | GNU gcc/g++ 4.7.x | [1.49.0](http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz/download) | [boost_1_49_0_gcc_4_7.tar.bz2](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_1_49_0_gcc_4_7.tar.bz2) | [boost_R2014a_x64.tar.gz](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_R2014a_x64.tar.gz)
 2015a  | GNU gcc/g++ 4.7.x | [1.49.0](http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz/download) | [boost_1_49_0_gcc_4_7.tar.bz2](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_1_49_0_gcc_4_7.tar.bz2) | [boost_R2014a_x64.tar.gz](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_R2015a_x64.tar.gz)
 2015b  | GNU gcc/g++ 4.7.x | [1.49.0](http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz/download) | [boost_1_49_0_gcc_4_7.tar.bz2](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_1_49_0_gcc_4_7.tar.bz2) | [boost_R2014a_x64.tar.gz](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_R2015b_x64.tar.gz)
+2016a  | GNU gcc/g++ 4.7.x | [1.56.0](http://sourceforge.net/projects/boost/files/boost/1.56.0/boost_1_56_0.tar.gz/download) | [boost_1_56_0_gcc_4_7.tar.bz2](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_1_56_0_gcc_4_7.tar.bz2) | [boost_R2016a_x64.tar.gz](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_R2016a_x64.tar.gz)
 
 ##Ros/Matlab combinatios that have already been tested:
 
-Ros\Matlab  | __2012a__ | __2012b__ | __2013a__ | __2013b__ | __2014a__ | __2014b__ | __2015a__ | __2015b__ |
------------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-__Groovy__ | never tested | never tested | never tested | never tested | never tested | never tested | never tested | never tested |
-__Hydro__ | never tested | never tested | never tested | working | working | never tested | never tested | never tested |
-__Indigo__ | never tested | never tested | never tested | never tested | working | working | working | working |
-__Jade__ | never tested | never tested | never tested | never tested | never tested | never tested | never tested | never tested |
+Ros\Matlab  | __2012a__ | __2012b__ | __2013a__ | __2013b__ | __2014a__ | __2014b__ | __2015a__ | __2015b__ | __2016a__ | 
+----------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+__Hydro__ | never tested | never tested | never tested | working | working | never tested | never tested | never tested | never tested |
+__Indigo__ | never tested | never tested | never tested | never tested | working | working | working | working | working |
+__Jade__ | never tested | never tested | never tested | never tested | never tested | never tested | never tested | never tested | never tested |
