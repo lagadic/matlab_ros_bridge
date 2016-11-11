@@ -45,7 +45,7 @@
 	ssPrintf("[%s:%s:%d] " format, TOSTRING(S_FUNCTION_NAME), __func__ , __LINE__, ##__VA_ARGS__);
 
 
-void ssMessage(const SimStruct *S, const char* format, ...){
+static void ssMessage(const SimStruct *S, const char* format, ...){
     const int lenFmt = snprintf(NULL, 0, "block '%s': %s", ssGetPath(S), format);
     char *fmt = new char[lenFmt+1];
     snprintf(fmt, lenFmt+1, "block '%s': %s", ssGetPath(S), format);
