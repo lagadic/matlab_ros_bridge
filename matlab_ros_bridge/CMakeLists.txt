@@ -127,8 +127,8 @@ add_definitions(-DMATLAB_MEX_FILE)
 catkin_package(
 	INCLUDE_DIRS include
 #  LIBRARIES matlab_ros_bridge
-   CATKIN_DEPENDS roscpp
-   DEPENDS Matlab
+#   CATKIN_DEPENDS roscpp
+#   DEPENDS Matlab
 )
 
 ###########
@@ -202,14 +202,14 @@ configure_file(${RTWMAKECFG_TEMPLATE_PATH} ${${PROJECT_NAME}_MEX_DESTINATION}/rt
 execute_process(
   COMMAND rospack plugins --attrib=mdl_path matlab_ros_bridge
   OUTPUT_VARIABLE MSG_TYPES OUTPUT_STRIP_TRAILING_WHITESPACE)
-  
+
 if("${MSG_TYPES} " STREQUAL " ")
   if(FoundPosition EQUAL -1)
     message(WARNING "We didn't find any plugin! You might need to run\n source ${CATKIN_DEVEL_PREFIX}/setup.bash\nbefore you can generate the library.")
   else()
     string(LENGTH ${CATKIN_DEVEL_PREFIX} CATKIN_DEVEL_PREFIX_LENGTH)
     string(LENGTH ${PROJECT_NAME} PROJECT_NAME_LENGTH)
-    math(EXPR CATKIN_DEVEL_BASE_PREFIX_LENGTH  "${CATKIN_DEVEL_PREFIX_LENGTH} - ${PROJECT_NAME_LENGTH} - 1") 
+    math(EXPR CATKIN_DEVEL_BASE_PREFIX_LENGTH  "${CATKIN_DEVEL_PREFIX_LENGTH} - ${PROJECT_NAME_LENGTH} - 1")
     string(SUBSTRING ${CATKIN_DEVEL_PREFIX} 0 ${CATKIN_DEVEL_BASE_PREFIX_LENGTH} CATKIN_DEVEL_BASE_PREFIX)
     message(WARNING "We didn't find any plugin! You might need to run\n source ${CATKIN_DEVEL_BASE_PREFIX}/setup.bash\nbefore you can generate the library.")
   endif()
@@ -228,18 +228,18 @@ else()
       set(MDL_PATHS "${MDL_PATHS} '${${PKG_TYPE}_PATH}/${MDL_PATH}'")
       set(SRC_PATHS "${SRC_PATHS} '${${PKG_TYPE}_PATH}/src/${PKG_TYPE}'")
     endforeach(MSG_TYPE)
-    
+
     set(SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR})
     set(SFUN_PATH "${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_LIB_DESTINATION}")
-    
+
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/generate_model.m.cmake ${CMAKE_BINARY_DIR}/generate_model.m)
-    
-    add_custom_target(generate_library 
+
+    add_custom_target(generate_library
         COMMAND ${MATLAB_EXE} -nodesktop -nosplash -r \"cd\('${CMAKE_BINARY_DIR}'\)\; run generate_model.m\; exit\"
         COMMAND mv ros_msgs.slx setup.m ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}
         COMMAND cp ${PROJECT_SOURCE_DIR}/models/slblocks.m ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-        
+
 endif()
 
 #############
@@ -277,7 +277,7 @@ install(DIRECTORY models/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/models
   PATTERN ".svn" EXCLUDE
   PATTERN "CMakeFiles" EXCLUDE
-)  
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 install(FILES
