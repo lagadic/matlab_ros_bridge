@@ -10,7 +10,7 @@ This fork is currently supported by [Riccardo Spica](mailto:riccardo.spica@irisa
 
 The software is released under the BSD license. See the LICENSE file in this repository for more information.
 
-##Configuring Matlab
+## Configuring Matlab
 
 Before proceeding with the next steps you need to configure Matlab mex compiler.
  
@@ -34,7 +34,7 @@ This should create two files in ~/.matlab/<matlab_version>/ named mex_C_glnxa64.
 Open mex_C++_glnxa64.xml and substitute all instances of "g++" and "$GCC" with "g++-4.7" (or 4.4 for older versions of Matlab).
 Open mex_C_glnxa64.xml and substitute all instances of "gcc" and "$GCC" with "gcc-4.7" (or 4.4 for older versions of Matlab).
 
-##Compiling the bridge
+## Compiling the bridge
 
 The process of compiling the matlab_ros_bridge is not straightforward. The main problem is that MATLAB doesn't use the system distribution of boost but instead comes with its ows shipped version, which can be found in, e.g. 'matlabroot/bin/glnxa64/'.
 Since the mex files that we generate will run inside matlab it is important that they are linked against the same version of boost that is used in MATLAB. Moreover, since the mex files will also be linked to ROS libraries, we also need to recompile ROS and link it to the same version of boost.
@@ -82,7 +82,7 @@ to
 
 If you are building boost on a x64 system you might also encounter [this bug](https://svn.boost.org/trac/boost/ticket/6851). In this case just apply the proposed fix.
 
-###Compiling ROS
+### Compiling ROS
 
 5. Follow the instructions for your ROS distribution on `http://wiki.ros.org/<distro>/Installation/Source` (e.g. for [Indigo](http://wiki.ros.org/indigo/Installation/Source)), to install ROS-Comm in the "wet" version until you need to compile. DON'T COMPILE NOW (it means that you don't have to do a catkin_make or catkin_make_isolated). To reduce the number of ros packages to compile, you can also initialize your workspace with
 
@@ -122,7 +122,7 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
     $ make generate_library
     ```
 
-###Running MATLAB
+### Running MATLAB
 
 10. In your [MATLAB Startup File](http://www.mathworks.it/it/help/matlab/matlab_env/startup-options.html) add the following lines:
 
@@ -137,7 +137,7 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
     $ matlab
     ```
 
-###Testing that everything works
+### Testing that everything works
 
 12. In your matlab command window navigate to the folder `/path/to/your/catkin_ws/src/matlab_ros_bridge/matlab_ros_bridge/models` and type
 
@@ -147,12 +147,12 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
     
     Now open the model `test.slx` and try to run it in all different running mode.
 
-##Note
+## Note
 
 It might be possible (but it has never been tested) to avoid compiling boost and try to link ros and the mex files against the boost libraries contained in the MATLAB installation directory.
 
 
-##Matlab boost and cpp version correspondances and download link
+## Matlab boost and cpp version correspondances and download link
 
 Matlab version  | gcc supported version | shipped boost vesion | compiled boost download | Matlab compiled version
 ------------- | -------------- | ------------- | ------------- | ------------- |
@@ -164,11 +164,13 @@ Matlab version  | gcc supported version | shipped boost vesion | compiled boost 
 2015a  | GNU gcc/g++ 4.7.x | [1.49.0](http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz/download) | [boost_1_49_0_gcc_4_7.tar.bz2](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_1_49_0_gcc_4_7.tar.bz2) | [boost_R2014a_x64.tar.gz](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_R2015a_x64.tar.gz)
 2015b  | GNU gcc/g++ 4.7.x | [1.49.0](http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz/download) | [boost_1_49_0_gcc_4_7.tar.bz2](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_1_49_0_gcc_4_7.tar.bz2) | [boost_R2014a_x64.tar.gz](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_R2015b_x64.tar.gz)
 2016a  | GNU gcc/g++ 4.7.x | [1.56.0](http://sourceforge.net/projects/boost/files/boost/1.56.0/boost_1_56_0.tar.gz/download) | [boost_1_56_0_gcc_4_7.tar.bz2](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_1_56_0_gcc_4_7.tar.bz2) | [boost_R2016a_x64.tar.gz](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_R2016a_x64.tar.gz)
+2016a  | GNU gcc/g++ 4.9.x | [1.56.0](http://sourceforge.net/projects/boost/files/boost/1.56.0/boost_1_56_0.tar.gz/download) | N/A | [boost_R2017a_x64.tar.gz](https://github.com/lagadic/matlab_ros_bridge/releases/download/v0.1/boost_R2017a_x64.tar.gz)
 
-##Ros/Matlab combinatios that have already been tested:
+## Ros/Matlab combinatios that have already been tested:
 
-Ros\Matlab  | __2012a__ | __2012b__ | __2013a__ | __2013b__ | __2014a__ | __2014b__ | __2015a__ | __2015b__ | __2016a__ | 
------------ | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
-__Hydro__ | never tested | never tested | never tested | working | working | never tested | never tested | never tested | never tested |
-__Indigo__ | never tested | never tested | never tested | never tested | working | working | working | working | working |
-__Jade__ | never tested | never tested | never tested | never tested | never tested | never tested | never tested | never tested | never tested |
+Ros\Matlab  | __2013b__ | __2014a__ | __2014b__ | __2015a__ | __2015b__ | __2016a__ | __2017a__ |
+----------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+__Hydro__ | working | working | never tested | never tested | never tested | never tested | never tested |
+__Indigo__ | never tested | working | working | working | working | working | never tested |
+__Kinetic__ | never tested | never tested | never tested | never tested | never tested | never tested | working |
+
