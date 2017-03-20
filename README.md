@@ -172,5 +172,5 @@ Ros\Matlab  | __2013b__ | __2014a__ | __2014b__ | __2015a__ | __2015b__ | __2016
 ----------- | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
 __Hydro__ | working | working | never tested | never tested | never tested | never tested | never tested |
 __Indigo__ | never tested | working | working | working | working | working | never tested |
-__Kinetic__ | never tested | never tested | never tested | never tested | never tested | never tested | working |
+__Kinetic__ | never tested | never tested | never tested | never tested | never tested | never tested | not working |
 
