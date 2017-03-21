@@ -10,6 +10,8 @@ This fork is currently supported by [Riccardo Spica](mailto:riccardo.spica@irisa
 
 The software is released under the BSD license. See the LICENSE file in this repository for more information.
 
+Since the compiling procedure is quite involved, please read the entire instructions carefully at least once **before** attempting to compile.
+
 ## Configuring Matlab
 
 Before proceeding with the next steps you need to configure Matlab mex compiler.
@@ -40,7 +42,7 @@ The process of compiling the matlab_ros_bridge is not straightforward. The main 
 Since the mex files that we generate will run inside matlab it is important that they are linked against the same version of boost that is used in MATLAB. Moreover, since the mex files will also be linked to ROS libraries, we also need to recompile ROS and link it to the same version of boost.
 Finally we also need to compile everyting (boost, ros and our mex files) using a c/c++ compiler officially supported by the MATLAB distribution that we are using.
 
-###Compiling boost
+### Compiling boost
 
 This section will guide you through the process of compiling the required version of boost with the compiler supported by your Matlab version. Before doing this you should try using one of the precompiled boost distributions available in the download section of this repository. Check the version correspondance table below in this page to find the correct download link.
 If you cannot find a precompiled boost download link for you setup then keep reading, otherwise skip to the following section.
@@ -84,13 +86,13 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
 
 ### Compiling ROS
 
-5. Follow the instructions for your ROS distribution on `http://wiki.ros.org/<distro>/Installation/Source` (e.g. for [Indigo](http://wiki.ros.org/indigo/Installation/Source)), to install ROS-Comm in the "wet" version until you need to compile. DON'T COMPILE NOW (it means that you don't have to do a catkin_make or catkin_make_isolated). To reduce the number of ros packages to compile, you can also initialize your workspace with
+5. Follow the instructions for your ROS distribution on `http://wiki.ros.org/<distro>/Installation/Source` (e.g. for [Indigo](http://wiki.ros.org/indigo/Installation/Source)), to install ROS-Comm in the "wet" version until you need to compile. DO NOT COMPILE NOW (i.e. do not run catkin_make or catkin_make_isolated). To reduce the number of ros packages to compile, you can also initialize your workspace with
 
     ```bash
     $ rosinstall_generator roscpp geometry_msgs std_msgs sensor_msgs shape_msgs --rosdistro indigo --deps --wet-only --tar > mrb.rosinstall
     $ wstool init -j8 src mrb.rosinstall
     ```
-
+To disable unnecessary message generators you can also run ``export ROS_LANG_DISABLE="genlisp;genpy;geneus;gennodejs"``.
 6. In a terminal navigate to the src directory of the catkin workspace created in the previous step and do:
 
     ```bash
@@ -112,7 +114,7 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
 9. Make sure you have "sourced" your workspace by running:
 
     ```bash
-    $ source /path/to/your/catkin_ws/devel_isolated/setup.bash
+    $ source /path/to/your/catkin_ws/devel/setup.bash
     ````
     
     Navigate to the build directory of the package `matlab_ros_bridge`. It should be  `catkin_ws/build/` or `catkin_ws/build_isolated/matlab_ros_bridge` if you used `catkin_make_isolated`. Now generate the simulink block library by running:
@@ -122,18 +124,48 @@ If you are building boost on a x64 system you might also encounter [this bug](ht
     $ make generate_library
     ```
 
+### Compiling procedure with ROS kinetic and Matlab 2017a
+
+When using this combination, a special procedure needs to be followed because of some compiling issues that are still being investigated. 
+
+1. Follow the above procedure until step 4.
+
+5. Initialize your workspace with
+
+    ```bash
+    $ rosinstall_generator roscpp geometry_msgs std_msgs sensor_msgs shape_msgs --rosdistro kinetic --deps --wet-only --tar --exclude rospack geneus genlisp gennodejs genpy > mrb.rosinstall
+    $ wstool init -j8 src mrb.rosinstall
+    ```
+
+6. Clone the console_bridge package and build it using gcc-4.9
+    ```bash
+    $ git clone git@github.com:ros/console_bridge.git
+    $ mkdir console_bridge/build
+    $ cd console_bridge/build
+    $ cmake -DCMAKE_C_COMPILER=/usr/bin/gcc-4.9 -DCMAKE_CXX_COMPILER=/usr/bin/g++-4.9 -DCMAKE_CXX_COMPILER=/usr/bin/g++-4.9 -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_CXX_FLAGS="-Wl,--rpath=/usr/local/MATLAB/R2017a/sys/os/glnxa64" ..
+    $ make install
+
+7. Follow steps 6 and 7 of the standard procedure.
+
+8. Compile ros and the bridge with:
+
+    ```bash
+    $ src/catkin/bin/catkin_make --cmake-args -DBOOST_ROOT=path/to/boost/installation/prefix -DBoost_NO_SYSTEM_PATHS=ON -DCMAKE_C_COMPILER=/usr/bin/gcc-4.9 -DCMAKE_CXX_COMPILER=/usr/bin/g++-4.9 -DMATLAB_DIR=/usr/local/MATLAB/R2017a -DROSCONSOLE_BACKEND=print -DCMAKE_CXX_FLAGS="-Wl,-rpath,/usr/local/MATLAB/R2017a/sys/os/glnxa64" -Dconsole_bridge_DIR=path/to/console_bridge/build
+    ```
+
+9. Follow step 9 of the standard procedure.
+
 ### Running MATLAB
 
 10. In your [MATLAB Startup File](http://www.mathworks.it/it/help/matlab/matlab_env/startup-options.html) add the following lines:
 
     ```matlab
-    addpath(fullfile('path','to','your','catkin_ws','devel_isolated','matlab_ros_bridge','share','matlab_ros_bridge'));
     run(fullfile('path','to','your','catkin_ws','devel_isolated','matlab_ros_bridge','share','matlab_ros_bridge','setup.m'));
     ```
 11. To run matlab open a terminal and type the following:
 
     ```matlab
-    $ source /path/to/your/catkin_ws/devel_isolated/setup.bash
+    $ source /path/to/your/catkin_ws/devel/setup.bash
     $ matlab
     ```
 
